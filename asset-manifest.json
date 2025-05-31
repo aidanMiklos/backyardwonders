@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/backyardwonders/static/css/main.66638095.css",
+    "main.js": "/backyardwonders/static/js/main.4f55010e.js",
+    "static/js/453.a27d96a1.chunk.js": "/backyardwonders/static/js/453.a27d96a1.chunk.js",
+    "index.html": "/backyardwonders/index.html",
+    "main.66638095.css.map": "/backyardwonders/static/css/main.66638095.css.map",
+    "main.4f55010e.js.map": "/backyardwonders/static/js/main.4f55010e.js.map",
+    "453.a27d96a1.chunk.js.map": "/backyardwonders/static/js/453.a27d96a1.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.66638095.css",
+    "static/js/main.4f55010e.js"
+  ]
+}
