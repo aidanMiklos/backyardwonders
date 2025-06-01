@@ -1,11 +1,20 @@
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-export const authenticateWithGoogle = async (credential) => {
-  const response = await fetch(`${API_URL}/users/google-signin`, {
-    method: 'POST',
+// Add CORS headers to all fetch requests
+const fetchWithConfig = (url, options = {}) => {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
     headers: {
+      ...options.headers,
       'Content-Type': 'application/json',
     },
+  });
+};
+
+export const authenticateWithGoogle = async (credential) => {
+  const response = await fetchWithConfig(`${API_URL}/users/google-signin`, {
+    method: 'POST',
     body: JSON.stringify({ token: credential }),
   });
   
@@ -17,10 +26,9 @@ export const authenticateWithGoogle = async (credential) => {
 };
 
 export const updateUserProfile = async (updates, token) => {
-  const response = await fetch(`${API_URL}/users/profile`, {
+  const response = await fetchWithConfig(`${API_URL}/users/profile`, {
     method: 'PATCH',
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(updates),
