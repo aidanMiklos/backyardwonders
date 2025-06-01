@@ -51,8 +51,29 @@ const wonderSchema = new mongoose.Schema({
     trim: true
   },
   accessibility: {
-    type: String,
-    trim: true
+    type: {
+      isWheelchairAccessible: {
+        type: Boolean,
+        default: false
+      },
+      hasAccessibleParking: {
+        type: Boolean,
+        default: false
+      },
+      hasAccessibleRestrooms: {
+        type: Boolean,
+        default: false
+      },
+      hasAccessiblePathways: {
+        type: Boolean,
+        default: false
+      },
+      accessibilityNotes: {
+        type: String,
+        trim: true
+      }
+    },
+    default: {}
   },
   difficulty: {
     type: String,

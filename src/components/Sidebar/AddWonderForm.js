@@ -92,7 +92,13 @@ const AddWonderForm = ({ onClose, onWonderAdded, onLocationSelectStart, onLocati
     latitude: '',
     longitude: '',
     history: '',
-    accessibility: '',
+    accessibility: {
+      isWheelchairAccessible: false,
+      hasAccessibleParking: false,
+      hasAccessibleRestrooms: false,
+      hasAccessiblePathways: false,
+      accessibilityNotes: ''
+    },
     difficulty: 'moderate',
     safetyWarnings: '',
     visitingTips: ''
@@ -119,8 +125,18 @@ const AddWonderForm = ({ onClose, onWonderAdded, onLocationSelectStart, onLocati
   }, [propSelectedLocation, onLocationSelectCancel]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'category') {
+    const { name, value, type, checked } = e.target;
+    
+    if (name.startsWith('accessibility.')) {
+      const accessibilityField = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        accessibility: {
+          ...prev.accessibility,
+          [accessibilityField]: type === 'checkbox' ? checked : value
+        }
+      }));
+    } else if (name === 'category') {
       setFormData(prev => ({
         ...prev,
         [name]: value,
@@ -438,6 +454,54 @@ const AddWonderForm = ({ onClose, onWonderAdded, onLocationSelectStart, onLocati
   const renderAdditionalDetails = () => (
     <>
       <div className="form-group">
+        <h4>Accessibility Features</h4>
+        <div className="accessibility-checkboxes">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              name="accessibility.isWheelchairAccessible"
+              checked={formData.accessibility.isWheelchairAccessible}
+              onChange={handleInputChange}
+            />
+            Wheelchair Accessible
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              name="accessibility.hasAccessibleParking"
+              checked={formData.accessibility.hasAccessibleParking}
+              onChange={handleInputChange}
+            />
+            Accessible Parking Available
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              name="accessibility.hasAccessibleRestrooms"
+              checked={formData.accessibility.hasAccessibleRestrooms}
+              onChange={handleInputChange}
+            />
+            Accessible Restrooms
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              name="accessibility.hasAccessiblePathways"
+              checked={formData.accessibility.hasAccessiblePathways}
+              onChange={handleInputChange}
+            />
+            Accessible Pathways
+          </label>
+        </div>
+        <textarea
+          name="accessibility.accessibilityNotes"
+          value={formData.accessibility.accessibilityNotes}
+          onChange={handleInputChange}
+          placeholder="Additional accessibility notes or details..."
+        />
+      </div>
+
+      <div className="form-group">
         <label htmlFor="history">History</label>
         <textarea
           id="history"
@@ -445,17 +509,6 @@ const AddWonderForm = ({ onClose, onWonderAdded, onLocationSelectStart, onLocati
           value={formData.history}
           onChange={handleInputChange}
           placeholder="Share the history of this place"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="accessibility">Accessibility</label>
-        <textarea
-          id="accessibility"
-          name="accessibility"
-          value={formData.accessibility}
-          onChange={handleInputChange}
-          placeholder="Describe accessibility features or limitations"
         />
       </div>
 

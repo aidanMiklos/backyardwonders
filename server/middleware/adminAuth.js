@@ -6,4 +6,15 @@ const adminAuth = (req, res, next) => {
   }
 };
 
-module.exports = adminAuth; 
+const superadminAuth = (req, res, next) => {
+  try {
+    if (!req.user || req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied. Superadmin privileges required.' });
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ message: 'Error checking superadmin privileges' });
+  }
+};
+
+module.exports = { adminAuth, superadminAuth }; 

@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const Wonder = require('../models/Wonder');
 const auth = require('../middleware/auth');
+const { superadminAuth } = require('../middleware/adminAuth');
 const { uploadImage } = require('../utils/storage');
 
 const upload = multer({
@@ -165,21 +166,53 @@ router.put('/:id', auth, upload.array('images', 10), async (req, res) => {
   }
 });
 
-// Delete a wonder
-router.delete('/:id', auth, async (req, res) => {
+// Delete a wonder (superadmin only)
+router.delete('/:id', auth, superadminAuth, async (req, res) => {
   try {
-    const wonder = await Wonder.findOneAndDelete({ 
-      _id: req.params.id, 
-      createdBy: req.user._id 
-    });
+    const wonder = await Wonder.findByIdAndDelete(req.params.id);
     
     if (!wonder) {
-      return res.status(404).json({ message: 'Wonder not found or unauthorized' });
+      return res.status(404).json({ message: 'Wonder not found' });
     }
     
     res.json({ message: 'Wonder deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting wonder' });
+  }
+});
+
+// Delete a rating (superadmin only)
+router.delete('/:wonderId/ratings/:ratingId', auth, superadminAuth, async (req, res) => {
+  try {
+    const wonder = await Wonder.findById(req.params.wonderId);
+    if (!wonder) {
+      return res.status(404).json({ message: 'Wonder not found' });
+    }
+
+    // Remove the rating
+    wonder.ratings = wonder.ratings.filter(rating => 
+      !rating._id.equals(req.params.ratingId)
+    );
+
+    // Recalculate average rating and rating count
+    wonder.ratingCount = wonder.ratings.length;
+    if (wonder.ratingCount > 0) {
+      const totalRating = wonder.ratings.reduce((acc, curr) => acc + curr.rating, 0);
+      wonder.averageRating = parseFloat((totalRating / wonder.ratingCount).toFixed(1));
+    } else {
+      wonder.averageRating = 0;
+    }
+
+    await wonder.save();
+    await wonder.populate([
+      { path: 'createdBy', select: 'displayName picture' },
+      { path: 'ratings.user', select: 'displayName picture' }
+    ]);
+    
+    res.json(wonder);
+  } catch (err) {
+    console.error('Error deleting rating:', err);
+    res.status(500).json({ message: 'Error deleting rating' });
   }
 });
 
