@@ -8,7 +8,9 @@ const fetchWithConfig = (url, options = {}) => {
     headers: {
       ...options.headers,
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
+    mode: 'cors'
   });
 };
 

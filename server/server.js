@@ -9,19 +9,39 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'https://frontend-2-abhz.onrender.com',
-    'https://backyardwonders.onrender.com',
-    'https://backyardwonders-frontend.onrender.com'
-  ],
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://frontend-2-abhz.onrender.com',
+      'https://backyardwonders.onrender.com',
+      'https://backyardwonders-frontend.onrender.com'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  maxAge: 86400 // 24 hours
 };
 
-// Middleware
+// Apply CORS middleware
 app.use(cors(corsOptions));
+
+// Additional headers for cookies
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', true);
+  next();
+});
+
 app.use(express.json());
 
 // Connect to MongoDB
