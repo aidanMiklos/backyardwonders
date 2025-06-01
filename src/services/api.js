@@ -145,4 +145,14 @@ export const addRatingToWonder = async (wonderId, ratingData, token) => {
   }
 
   return response.json();
+};
+
+export const getWonderById = async (wonderId) => {
+  try {
+    const response = await fetchWithConfig(`/wonders/${wonderId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching wonder:', error);
+    throw error;
+  }
 }; 

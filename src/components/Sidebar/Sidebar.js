@@ -6,7 +6,7 @@ import { CATEGORIES } from '../../constants/categories';
 import UserProfile from './UserProfile';
 import AddWonderForm from './AddWonderForm';
 import Search from './Search';
-import { addRatingToWonder, getWonders } from '../../services/api';
+import { addRatingToWonder, getWonderById } from '../../services/api';
 import './Sidebar.css';
 
 const StarRating = ({ rating, setRating, disabled }) => {
@@ -92,7 +92,7 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
         )}
       </div>
 
-      {user && (
+      {user ? (
         <form onSubmit={handleReviewSubmit} className="review-form">
           <h4>{currentUserReview ? 'Update Your Review' : 'Leave a Review'}</h4>
           {reviewError && <p className="error-message review-error">{reviewError}</p>}
@@ -107,8 +107,9 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
             {isSubmittingReview ? 'Submitting...' : (currentUserReview ? 'Update Review' : 'Submit Review')}
           </button>
         </form>
+      ) : (
+        <p>Please log in to leave a review.</p>
       )}
-      {!user && <p>Please log in to leave a review.</p>}
     </section>
   );
 };
@@ -119,6 +120,28 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
   useEffect(() => {
     setMarker(initialMarker);
   }, [initialMarker]);
+
+  useEffect(() => {
+    const fetchWonderDetails = async () => {
+      try {
+        // Get the wonder's ID, handling both possible property names
+        const wonderId = marker?.id || marker?._id;
+        if (!wonderId) return;
+
+        const wonderData = await getWonderById(wonderId);
+        if (wonderData) {
+          setMarker(prevMarker => ({ ...prevMarker, ...wonderData }));
+          if (onMarkerUpdate) {
+            onMarkerUpdate(wonderData);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching wonder details:', err);
+      }
+    };
+
+    fetchWonderDetails();
+  }, [marker?.id, marker?._id, onMarkerUpdate]);
 
   const handleReviewSubmitted = (updatedWonder) => {
     setMarker(prevMarker => ({ ...prevMarker, ...updatedWonder }));
@@ -213,7 +236,7 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
           </section>
         )}
 
-        <ReviewsSection 
+        <ReviewsSection
           wonder={{
             ...marker,
             ratings: marker.ratings || [],
