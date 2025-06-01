@@ -12,7 +12,8 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'https://frontend-2-abhz.onrender.com',
-    'https://backyardwonders.onrender.com'
+    'https://backyardwonders.onrender.com',
+    'https://backyardwonders-frontend.onrender.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

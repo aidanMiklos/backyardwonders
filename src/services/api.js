@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://backyardwonders.onrender.com/api';
 
 // Add CORS headers to all fetch requests
 const fetchWithConfig = (url, options = {}) => {
