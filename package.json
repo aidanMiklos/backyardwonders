@@ -2,7 +2,7 @@
   "name": "backyardwonders",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://aidanmiklos.github.io/backyardwonders",
+  "homepage": ".",
   "dependencies": {
     "@react-oauth/google": "^0.12.2",
     "@testing-library/jest-dom": "^5.16.5",
@@ -23,8 +23,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "build:render": "REACT_APP_API_URL=https://backyardwonders.onrender.com/api react-scripts build"
   },
   "eslintConfig": {
     "extends": [

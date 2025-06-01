@@ -109,7 +109,7 @@ const SuperAdminRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router basename="/backyardwonders">
+    <Router>
       <Routes>
         <Route path="/" element={<MainAppLayout />} />
         <Route 

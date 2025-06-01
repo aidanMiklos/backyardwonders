@@ -1,0 +1,40 @@
+services:
+  # Frontend static site
+  - type: web
+    name: backyardwonders-frontend
+    env: static
+    buildCommand: npm run build:render
+    staticPublishPath: ./build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://backyardwonders.onrender.com/api
+
+  # Backend API service
+  - type: web
+    name: backyardwonders-backend
+    env: node
+    region: oregon
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false # Set this in Render dashboard
+      - key: JWT_SECRET
+        sync: false # Set this in Render dashboard
+      - key: GOOGLE_CLIENT_ID
+        value: 585408728067-rh13f0to1rtnku0lnp5qll3f41t5obb1.apps.googleusercontent.com
+      - key: GOOGLE_CLOUD_PROJECT_ID
+        value: backyardwonders
+      - key: GOOGLE_CLOUD_KEYFILE
+        value: /credentials/keyfile.json
+      - key: GOOGLE_CLOUD_BUCKET
+        value: backyardwonders
+      - key: PORT
+        value: 10000 
