@@ -2,6 +2,7 @@ const express = require('express');
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Wonder = require('../models/Wonder');
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -67,10 +68,28 @@ router.post('/google-signin', async (req, res) => {
 // Get user profile
 router.get('/profile', auth, async (req, res) => {
   try {
+    // Ensure virtuals are populated, including wondersCount and a new reviewsCount
     await req.user.populate('wondersCount');
-    res.send(req.user);
+    
+    // Manually count reviews by this user
+    const wondersWithUserReviews = await Wonder.find({ "ratings.user": req.user._id });
+    let reviewCount = 0;
+    wondersWithUserReviews.forEach(wonder => {
+      wonder.ratings.forEach(rating => {
+        if (rating.user.equals(req.user._id)) {
+          reviewCount++;
+        }
+      });
+    });
+
+    // Send a combined user object
+    const userProfile = req.user.toObject(); // Convert to plain object to add properties
+    userProfile.reviewsCount = reviewCount; 
+
+    res.send(userProfile);
   } catch (error) {
-    res.status(500).send({ error: 'Error fetching profile' });
+    console.error("Error fetching profile:", error); // Log the error
+    res.status(500).send({ error: 'Error fetching profile: ' + error.message });
   }
 });
 

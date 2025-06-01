@@ -747,4 +747,23 @@
 
 .view-full-page-button:hover {
   background-color: #2980b9;
+}
+
+.placeholder-image-container {
+  width: 100%;
+  height: 200px;
+  background-color: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.placeholder-image-text {
+  color: #888;
+  font-size: 14px;
+  font-style: italic;
+  max-width: 90%;
 } 

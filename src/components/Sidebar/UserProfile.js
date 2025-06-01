@@ -16,26 +16,58 @@ const UserProfile = ({ onClose }) => {
   });
   const [activeTab, setActiveTab] = useState('myWonders'); // 'myWonders', 'myReviews' etc.
   const [userWonders, setUserWonders] = useState([]);
-  const [loadingWonders, setLoadingWonders] = useState(false);
+  const [userReviews, setUserReviews] = useState([]);
+  const [userPhotos, setUserPhotos] = useState([]);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   useEffect(() => {
-    if (user && activeTab === 'myWonders') {
-      const fetchUserWonders = async () => {
-        setLoadingWonders(true);
+    if (user) {
+      const fetchUserContent = async () => {
+        setLoadingContent(true);
         try {
-          // Assuming getWonders can be filtered or you have a specific endpoint
-          const allWonders = await getWonders(); // In a real app, filter by user.createdBy === user._id
-          const filteredWonders = allWonders.filter(wonder => wonder.createdBy._id === user._id || wonder.createdBy === user._id); // Handle populated and non-populated createdBy
-          setUserWonders(filteredWonders);
+          // Fetch wonders
+          const allWonders = await getWonders();
+          
+          // Filter wonders created by user
+          const userCreatedWonders = allWonders.filter(wonder => 
+            wonder.createdBy?._id === user._id || wonder.createdBy === user._id
+          );
+          setUserWonders(userCreatedWonders);
+
+          // Collect all reviews by user
+          const userReviews = allWonders.reduce((reviews, wonder) => {
+            const wonderReviews = wonder.ratings?.filter(rating => 
+              rating.user?._id === user._id || rating.user === user._id
+            ).map(rating => ({
+              ...rating,
+              wonderName: wonder.name,
+              wonderId: wonder._id || wonder.id
+            }));
+            return wonderReviews ? [...reviews, ...wonderReviews] : reviews;
+          }, []);
+          setUserReviews(userReviews);
+
+          // Collect all photos from user's wonders
+          const photos = userCreatedWonders.reduce((allPhotos, wonder) => {
+            const wonderPhotos = wonder.images?.map(image => ({
+              ...image,
+              wonderName: wonder.name,
+              wonderId: wonder._id || wonder.id
+            })) || [];
+            return [...allPhotos, ...wonderPhotos];
+          }, []);
+          setUserPhotos(photos);
+
         } catch (err) {
-          console.error("Failed to fetch user's wonders", err);
-          setError("Could not load your wonders.");
+          console.error("Failed to fetch user content", err);
+          setError("Could not load your content.");
         }
-        setLoadingWonders(false);
+        setLoadingContent(false);
       };
-      fetchUserWonders();
+
+      fetchUserContent();
     }
-  }, [user, activeTab, token]);
+  }, [user, activeTab]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -71,13 +103,68 @@ const UserProfile = ({ onClose }) => {
   };
 
   // Placeholder for other tab content
-  const renderMyReviews = () => <div className="tab-panel-placeholder">Your reviews will appear here.</div>;
-  const renderMyPhotos = () => <div className="tab-panel-placeholder">Your photos will appear here.</div>;
+  const renderMyReviews = () => {
+    if (loadingContent) return <div className="loading-placeholder">Loading your reviews...</div>;
+    if (!userReviews.length) {
+      return (
+        <div className="no-content-placeholder">
+          <span className="no-content-icon">✍️</span>
+          <h3>No Reviews Yet</h3>
+          <p>Reviews you write will appear here.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="reviews-list">
+        {userReviews.map((review, index) => (
+          <div key={index} className="review-card">
+            <div className="review-header">
+              <h4>{review.wonderName}</h4>
+              <div className="star-rating">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} className={`star ${review.rating >= star ? 'filled' : ''}`}>★</span>
+                ))}
+              </div>
+            </div>
+            <p className="review-comment">{review.comment}</p>
+            <p className="review-date">{new Date(review.createdAt).toLocaleDateString()}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderMyPhotos = () => {
+    if (loadingContent) return <div className="loading-placeholder">Loading your photos...</div>;
+    if (!userPhotos.length) {
+      return (
+        <div className="no-content-placeholder">
+          <span className="no-content-icon">📸</span>
+          <h3>No Photos Yet</h3>
+          <p>Photos you upload to your wonders will appear here.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="user-content-grid photos-grid">
+        {userPhotos.map((photo, index) => (
+          <div key={index} className="photo-card">
+            <img src={photo.url} alt={`Photo from ${photo.wonderName}`} />
+            <div className="photo-info">
+              <h4>{photo.wonderName}</h4>
+              <p>{new Date(photo.uploadedAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderActivity = () => <div className="tab-panel-placeholder">Your activity feed will appear here.</div>;
   const renderSaved = () => <div className="tab-panel-placeholder">Your saved items will appear here.</div>;
 
   const renderMyWonders = () => {
-    if (loadingWonders) return <div className="loading-placeholder">Loading your wonders...</div>;
+    if (loadingContent) return <div className="loading-placeholder">Loading your wonders...</div>;
     if (!userWonders.length) {
       return (
         <div className="no-content-placeholder">
@@ -206,7 +293,7 @@ const UserProfile = ({ onClose }) => {
             <p>Wonders</p>
           </div>
           <div>
-            <span>0</span> {/* Placeholder */}
+            <span>{user?.reviewsCount || 0}</span>
             <p>Reviews</p>
           </div>
         </div>

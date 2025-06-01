@@ -133,11 +133,17 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
   
   return (
     <div className="marker-details">
-      {marker.coverImage && (
-        <div className="marker-cover-image">
+      <div className="marker-cover-image">
+        {marker.coverImage?.url ? (
           <img src={marker.coverImage.url} alt={marker.name} />
-        </div>
-      )}
+        ) : (
+          <div className="placeholder-image-container">
+            <div className="placeholder-image-text">
+              Be the first to upload an image for this wonder
+            </div>
+          </div>
+        )}
+      </div>
       <div className="marker-details-header">
         <h2 className="marker-details-title">{marker.name}</h2>
         <div className="marker-details-meta">
@@ -207,7 +213,15 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
           </section>
         )}
 
-        <ReviewsSection wonder={marker} onReviewSubmitted={handleReviewSubmitted} />
+        <ReviewsSection 
+          wonder={{
+            ...marker,
+            ratings: marker.ratings || [],
+            ratingCount: marker.ratingCount || 0,
+            averageRating: marker.averageRating || 0
+          }} 
+          onReviewSubmitted={handleReviewSubmitted}
+        />
       </div>
     </div>
   );

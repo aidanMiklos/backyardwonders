@@ -296,7 +296,7 @@ function Map({ onMarkerClick, shouldRefresh, isSelectingLocation, onLocationSele
   }
 
   return (
-    <div className="map-container">
+    <div className={`map-container ${isSelectingLocation ? 'selecting-location-cursor' : ''}`}>
       <MapContainer
         center={defaultPosition}
         zoom={13}
