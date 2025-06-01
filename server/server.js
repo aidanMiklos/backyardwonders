@@ -13,7 +13,7 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'https://frontend-2-abhz.onrender.com',
-      'https://backyardwonders.onrender.com',
+      'https://backend-91pf.onrender.com',
       'https://backyardwonders-frontend.onrender.com'
     ];
     
