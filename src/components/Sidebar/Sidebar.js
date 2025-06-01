@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
@@ -16,7 +16,7 @@ const StarRating = ({ rating, setRating, disabled }) => {
         <span
           key={star}
           className={`star ${rating >= star ? 'filled' : ''} ${disabled ? 'disabled' : ''}`}
-          onClick={() => !disabled && setRating(star)}
+          onClick={() => !disabled && setRating?.(star)}
         >
           ★
         </span>
@@ -29,11 +29,31 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
   const { user, token } = useUser();
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [reviewError, setReviewError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
 
-  const currentUserReview = wonder.ratings?.find(r => r.user?._id === user?._id || r.user === user?._id);
+  // Initialize reviews and calculate average rating
+  useEffect(() => {
+    if (wonder?.ratings) {
+      setReviews(wonder.ratings);
+      if (wonder.ratings.length > 0) {
+        const avg = wonder.ratings.reduce((acc, curr) => acc + curr.rating, 0) / wonder.ratings.length;
+        setAverageRating(avg);
+      }
+    }
+  }, [wonder?.ratings]);
 
+  // Find the current user's review if it exists
+  const currentUserReview = useMemo(() => {
+    if (!user || !reviews.length) return null;
+    return reviews.find(review => 
+      review.user?._id === user._id || review.user === user._id
+    );
+  }, [user, reviews]);
+
+  // Reset form when current user's review changes
   useEffect(() => {
     if (currentUserReview) {
       setNewRating(currentUserReview.rating);
@@ -44,78 +64,136 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
     }
   }, [currentUserReview]);
 
-  const handleReviewSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      setReviewError('You must be logged in to leave a review.');
+      setError('Please log in to leave a review');
       return;
     }
     if (newRating === 0) {
-      setReviewError('Please select a star rating.');
+      setError('Please select a rating');
       return;
     }
-    setIsSubmittingReview(true);
-    setReviewError('');
+
+    setIsSubmitting(true);
+    setError('');
+
     try {
-      const updatedWonder = await addRatingToWonder(wonder.id || wonder._id, { rating: newRating, comment: newComment }, token);
-      onReviewSubmitted(updatedWonder);
+      const wonderId = wonder.id || wonder._id;
+      const updatedWonder = await addRatingToWonder(
+        wonderId,
+        { rating: newRating, comment: newComment },
+        token
+      );
+
+      if (onReviewSubmitted) {
+        onReviewSubmitted(updatedWonder);
+      }
+
+      // Update local state
+      setReviews(updatedWonder.ratings || []);
+      if (updatedWonder.ratings?.length > 0) {
+        const avg = updatedWonder.ratings.reduce((acc, curr) => acc + curr.rating, 0) / updatedWonder.ratings.length;
+        setAverageRating(avg);
+      }
     } catch (err) {
-      setReviewError(err.message || 'Failed to submit review.');
+      setError(err.message || 'Failed to submit review');
     } finally {
-      setIsSubmittingReview(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
     <section className="marker-section reviews-section">
-      <h3>Reviews ({wonder.ratingCount || 0})</h3>
-      {wonder.averageRating > 0 && (
+      <h3>Reviews ({reviews.length || 0})</h3>
+      
+      {/* Average Rating Display */}
+      {reviews.length > 0 && (
         <div className="average-rating-display">
-          Average: <StarRating rating={wonder.averageRating} disabled={true} /> ({wonder.averageRating.toFixed(1)})
+          <span>Average Rating:</span>
+          <StarRating rating={Math.round(averageRating)} disabled={true} />
+          <span>({averageRating.toFixed(1)})</span>
         </div>
       )}
-      <div className="existing-reviews">
-        {wonder.ratings && wonder.ratings.length > 0 ? (
-          wonder.ratings.map(review => (
-            <div key={review._id || review.user?._id || review.user} className="review-item">
-              <div className="review-header">
-                <img src={review.user?.picture || '/default-profile.png'} alt={review.user?.displayName} className="reviewer-avatar"/>
-                <strong>{review.user?.displayName || 'User'}</strong>
-                <StarRating rating={review.rating} disabled={true} />
-              </div>
-              <p className="review-comment">{review.comment}</p>
-              <p className="review-date">{new Date(review.createdAt).toLocaleDateString()}</p>
-            </div>
-          ))
-        ) : (
-          <p>No reviews yet. Be the first!</p>
-        )}
-      </div>
 
+      {/* Review Form */}
       {user ? (
-        <form onSubmit={handleReviewSubmit} className="review-form">
-          <h4>{currentUserReview ? 'Update Your Review' : 'Leave a Review'}</h4>
-          {reviewError && <p className="error-message review-error">{reviewError}</p>}
-          <StarRating rating={newRating} setRating={setNewRating} />
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Share your thoughts..."
-            rows="3"
-          />
-          <button type="submit" disabled={isSubmittingReview} className="submit-review-button">
-            {isSubmittingReview ? 'Submitting...' : (currentUserReview ? 'Update Review' : 'Submit Review')}
+        <form onSubmit={handleSubmit} className="review-form">
+          <h4>{currentUserReview ? 'Update Your Review' : 'Write a Review'}</h4>
+          {error && <p className="error-message review-error">{error}</p>}
+          
+          <div className="rating-input">
+            <label>Your Rating:</label>
+            <StarRating rating={newRating} setRating={setNewRating} />
+          </div>
+
+          <div className="comment-input">
+            <label>Your Comment:</label>
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Share your experience..."
+              rows="3"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="submit-review-button"
+          >
+            {isSubmitting 
+              ? 'Submitting...' 
+              : (currentUserReview ? 'Update Review' : 'Submit Review')
+            }
           </button>
         </form>
       ) : (
-        <p>Please log in to leave a review.</p>
+        <div className="login-prompt">
+          <p>Please log in to leave a review.</p>
+        </div>
       )}
+
+      {/* Existing Reviews */}
+      <div className="existing-reviews">
+        <h4>All Reviews</h4>
+        {reviews.length > 0 ? (
+          reviews.map((review) => (
+            <div 
+              key={review._id || `${review.user?._id}-${review.createdAt}`} 
+              className="review-item"
+            >
+              <div className="review-header">
+                <div className="reviewer-info">
+                  <img 
+                    src={review.user?.picture || '/default-profile.png'} 
+                    alt={review.user?.displayName || 'User'} 
+                    className="reviewer-avatar"
+                  />
+                  <strong>{review.user?.displayName || 'Anonymous User'}</strong>
+                </div>
+                <StarRating rating={review.rating} disabled={true} />
+              </div>
+              {review.comment && (
+                <p className="review-comment">{review.comment}</p>
+              )}
+              <p className="review-date">
+                {new Date(review.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="no-reviews">No reviews yet. Be the first to review!</p>
+        )}
+      </div>
     </section>
   );
 };
 
 const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMarkerUpdate }) => {
   const [marker, setMarker] = useState(initialMarker);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showImageCarousel, setShowImageCarousel] = useState(false);
 
   useEffect(() => {
     setMarker(initialMarker);
@@ -124,7 +202,6 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
   useEffect(() => {
     const fetchWonderDetails = async () => {
       try {
-        // Get the wonder's ID, handling both possible property names
         const wonderId = marker?.id || marker?._id;
         if (!wonderId) return;
 
@@ -143,109 +220,188 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
     fetchWonderDetails();
   }, [marker?.id, marker?._id, onMarkerUpdate]);
 
-  const handleReviewSubmitted = (updatedWonder) => {
-    setMarker(prevMarker => ({ ...prevMarker, ...updatedWonder }));
-    if (onMarkerUpdate) {
-      onMarkerUpdate(updatedWonder);
-    }
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === (marker.photos?.length || 0) - 1 ? 0 : prev + 1
+    );
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? (marker.photos?.length || 0) - 1 : prev - 1
+    );
+  };
+
+  const getAmenityIcon = (amenity) => {
+    const icons = {
+      parking: '🅿️',
+      accessible: '♿',
+      familyFriendly: '👨‍👩‍👧‍👦',
+      petFriendly: '🐾',
+      scenic: '🌄',
+      hiking: '🥾',
+      camping: '⛺',
+      photography: '📸'
+    };
+    return icons[amenity] || '•';
   };
 
   if (!marker) return null;
-  
-  console.log('Rendering marker details:', marker);
-  
+
+  const allImages = [
+    ...(marker.coverImage ? [marker.coverImage] : []),
+    ...(marker.photos || [])
+  ];
+
   return (
     <div className="marker-details">
-      <div className="marker-cover-image">
-        {marker.coverImage?.url ? (
-          <img src={marker.coverImage.url} alt={marker.name} />
-        ) : (
-          <div className="placeholder-image-container">
-            <div className="placeholder-image-text">
-              Be the first to upload an image for this wonder
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Header Section */}
       <div className="marker-details-header">
-        <h2 className="marker-details-title">{marker.name}</h2>
-        <div className="marker-details-meta">
-          <span className="marker-details-category">{CATEGORIES[marker.category]?.label}</span>
-          <span>•</span>
-          <span 
-            className="marker-details-coordinates"
-            onClick={() => onCoordinateClick(marker.latitude, marker.longitude)}
-          >
-            {marker.latitude.toFixed(6)}, {marker.longitude.toFixed(6)}
-          </span>
+        <button className="back-button" onClick={onClose}>←</button>
+        <div className="header-content">
+          <h2 className="marker-details-title">{marker.name}</h2>
+          <div className="marker-details-subtitle">
+            <span className="category">{CATEGORIES[marker.category]?.label}</span>
+            <span className="location">{marker.country}</span>
+          </div>
         </div>
       </div>
-      
-      <div className="marker-details-content">
-        <p className="marker-description">{marker.description}</p>
-        
-        {marker.slug && (
-          <Link to={`/wonder/${marker.slug}`} className="button-style view-full-page-button">
-            View Full Page
-          </Link>
-        )}
 
-        {marker.history && (
-          <section className="marker-section">
-            <h3>History</h3>
-            <p>{marker.history}</p>
-          </section>
-        )}
-
-        {marker.accessibility && (
-          <section className="marker-section">
-            <h3>Accessibility</h3>
-            <p>{marker.accessibility}</p>
-          </section>
-        )}
-
-        <section className="marker-section">
-          <h3>Details</h3>
-          <div className="marker-details-grid">
-            {marker.difficulty && (
-              <div className="detail-item">
-                <span className="detail-label">Difficulty</span>
-                <span className="detail-value">{marker.difficulty}</span>
+      {/* Image Section */}
+      <div className="marker-image-section">
+        {allImages.length > 0 ? (
+          <>
+            <div className="main-image-container">
+              <img 
+                src={allImages[currentImageIndex].url} 
+                alt={marker.name}
+                className="main-image"
+                onError={(e) => {
+                  e.target.src = '/images/placeholder-wonder.jpg';
+                }}
+              />
+              {allImages.length > 1 && (
+                <>
+                  <button className="image-nav prev" onClick={handlePrevImage}>‹</button>
+                  <button className="image-nav next" onClick={handleNextImage}>›</button>
+                  <div className="image-counter">
+                    {currentImageIndex + 1} / {allImages.length}
+                  </div>
+                </>
+              )}
+            </div>
+            {allImages.length > 1 && (
+              <div className="image-thumbnails">
+                {allImages.map((img, idx) => (
+                  <div 
+                    key={idx}
+                    className={`thumbnail ${idx === currentImageIndex ? 'active' : ''}`}
+                    onClick={() => setCurrentImageIndex(idx)}
+                  >
+                    <img 
+                      src={img.url} 
+                      alt={`${marker.name} ${idx + 1}`}
+                      onError={(e) => {
+                        e.target.src = '/images/placeholder-wonder.jpg';
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-            {marker.country && (
-              <div className="detail-item">
-                <span className="detail-label">Country</span>
-                <span className="detail-value">{marker.country}</span>
-              </div>
-            )}
+          </>
+        ) : (
+          <div className="placeholder-image-container">
+            <img 
+              src="/images/placeholder-wonder.jpg" 
+              alt="Placeholder"
+              className="placeholder-image"
+            />
           </div>
-        </section>
-
-        {marker.safetyWarnings && (
-          <section className="marker-section warning">
-            <h3>Safety Warnings</h3>
-            <p>{marker.safetyWarnings}</p>
-          </section>
         )}
-
-        {marker.visitingTips && (
-          <section className="marker-section">
-            <h3>Tips for Visiting</h3>
-            <p>{marker.visitingTips}</p>
-          </section>
-        )}
-
-        <ReviewsSection
-          wonder={{
-            ...marker,
-            ratings: marker.ratings || [],
-            ratingCount: marker.ratingCount || 0,
-            averageRating: marker.averageRating || 0
-          }} 
-          onReviewSubmitted={handleReviewSubmitted}
-        />
       </div>
+
+      {/* Good to Know Section */}
+      <section className="good-to-know-section">
+        <h3>Good to Know</h3>
+        <div className="amenities-grid">
+          {marker.accessibility && (
+            <div className="amenity-item">
+              <span className="amenity-icon">♿</span>
+              <span>Wheelchair Accessible</span>
+            </div>
+          )}
+          {marker.difficulty && (
+            <div className="amenity-item">
+              <span className="amenity-icon">🥾</span>
+              <span>Difficulty: {marker.difficulty}</span>
+            </div>
+          )}
+          {marker.visitingTips && (
+            <div className="amenity-item">
+              <span className="amenity-icon">ℹ️</span>
+              <span>Visiting Tips Available</span>
+            </div>
+          )}
+          {marker.safetyWarnings && (
+            <div className="amenity-item">
+              <span className="amenity-icon">⚠️</span>
+              <span>Safety Information</span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Details Section */}
+      <section className="details-section">
+        <h3>Details</h3>
+        <div className="details-content">
+          <div className="detail-item">
+            <h4>Description</h4>
+            <p>{marker.description}</p>
+          </div>
+          {marker.history && (
+            <div className="detail-item">
+              <h4>History</h4>
+              <p>{marker.history}</p>
+            </div>
+          )}
+          {marker.accessibility && (
+            <div className="detail-item">
+              <h4>Accessibility</h4>
+              <p>{marker.accessibility}</p>
+            </div>
+          )}
+          {marker.visitingTips && (
+            <div className="detail-item">
+              <h4>Visiting Tips</h4>
+              <p>{marker.visitingTips}</p>
+            </div>
+          )}
+          {marker.safetyWarnings && (
+            <div className="detail-item warning">
+              <h4>Safety Warnings</h4>
+              <p>{marker.safetyWarnings}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <ReviewsSection
+        wonder={{
+          ...marker,
+          ratings: marker.ratings || [],
+          ratingCount: marker.ratingCount || 0,
+          averageRating: marker.averageRating || 0
+        }} 
+        onReviewSubmitted={handleReviewSubmitted}
+      />
+
+      {marker.slug && (
+        <Link to={`/wonder/${marker.slug}`} className="view-full-page-button">
+          View Full Page
+        </Link>
+      )}
     </div>
   );
 };

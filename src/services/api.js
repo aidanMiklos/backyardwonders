@@ -149,10 +149,42 @@ export const addRatingToWonder = async (wonderId, ratingData, token) => {
 
 export const getWonderById = async (wonderId) => {
   try {
-    const response = await fetchWithConfig(`/wonders/${wonderId}`);
-    return response.data;
+    const response = await fetch(`${API_URL}/wonders/${wonderId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch wonder details');
+    }
+
+    return response.json();
   } catch (error) {
     console.error('Error fetching wonder:', error);
+    throw error;
+  }
+};
+
+export const uploadImage = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(`${API_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload image');
+    }
+
+    const data = await response.json();
+    return data.url;
+  } catch (error) {
+    console.error('Error uploading image:', error);
     throw error;
   }
 }; 

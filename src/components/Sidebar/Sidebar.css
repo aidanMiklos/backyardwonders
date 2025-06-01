@@ -248,148 +248,255 @@
 .marker-details {
   background-color: #1a1a1a;
   color: white;
+  height: 100%;
+  overflow-y: auto;
 }
 
-.marker-cover-image {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
+.marker-details-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  background-color: #1a1a1a;
+  z-index: 10;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+}
+
+.header-content {
+  flex: 1;
+}
+
+.marker-details-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.marker-details-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  color: #888;
+  font-size: 14px;
+}
+
+.marker-details-subtitle .category {
+  color: #3498db;
+}
+
+/* Image Section */
+.marker-image-section {
   position: relative;
+  background-color: #000;
 }
 
-.marker-cover-image img {
+.main-image-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+}
+
+.main-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.marker-details-header {
-  padding: 20px;
-  margin-bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
-  margin-top: -80px;
-  position: relative;
-  z-index: 1;
-}
-
-.marker-details-title {
-  font-size: 24px;
-  margin: 0 0 10px 0;
+.image-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
   color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.marker-details-meta {
-  font-size: 14px;
-  color: #ccc;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  transition: background-color 0.2s;
 }
 
-.marker-details-category {
-  color: #3498db;
-  font-weight: 500;
+.image-nav:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 
-.marker-details-coordinates {
+.image-nav.prev {
+  left: 10px;
+}
+
+.image-nav.next {
+  right: 10px;
+}
+
+.image-counter {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+}
+
+.image-thumbnails {
+  display: flex;
+  gap: 5px;
+  padding: 10px;
+  background: #000;
+  overflow-x: auto;
+}
+
+.thumbnail {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
   cursor: pointer;
-  text-decoration: underline;
-  color: #2980b9;
+  opacity: 0.6;
+  transition: opacity 0.2s;
 }
 
-.marker-details-coordinates:hover {
-  color: #3498db;
+.thumbnail.active {
+  opacity: 1;
+  border: 2px solid #3498db;
 }
 
-.marker-details-content {
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder-image-container {
+  width: 100%;
+  height: 250px;
+  background-color: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+/* Good to Know Section */
+.good-to-know-section {
+  padding: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.good-to-know-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.amenities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.amenity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #2a2a2a;
+  border-radius: 8px;
+}
+
+.amenity-icon {
+  font-size: 20px;
+}
+
+/* Details Section */
+.details-section {
   padding: 20px;
 }
 
-.marker-description {
-  font-size: 16px;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
-  color: #ddd;
+.details-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 20px;
+  font-weight: 600;
 }
 
-.marker-section {
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  padding: 15px;
-  margin: 15px 0;
-}
-
-.marker-section h3 {
-  color: white;
-  margin-top: 0;
-}
-
-.marker-section p {
-  color: #ccc;
-  margin-bottom: 0;
-}
-
-.marker-details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
+.details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-}
-
-.detail-value {
-  font-size: 14px;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.marker-section.warning {
-  background-color: #fff5f5;
-  padding: 16px;
+  background: #2a2a2a;
+  padding: 15px;
   border-radius: 8px;
+}
+
+.detail-item h4 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #3498db;
+}
+
+.detail-item p {
+  margin: 0;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.detail-item.warning {
+  background: #422;
   border-left: 4px solid #e74c3c;
 }
 
-.marker-section.warning h3 {
-  color: #c0392b;
-}
-
-.marker-section.warning p {
+.detail-item.warning h4 {
   color: #e74c3c;
 }
 
-.search-slide .slide-content {
-  padding: 0;
-  background-color: #1a1a1a;
-}
-
-.search-slide .slide-header {
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #2a2a2a;
-}
-
-.search-slide .slide-header h2 {
+/* View Full Page Button */
+.view-full-page-button {
+  display: block;
+  margin: 20px;
+  padding: 12px;
+  background: #3498db;
   color: white;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.2s;
 }
 
-.search-slide .close-button {
-  color: #888;
-}
-
-.search-slide .close-button:hover {
-  background-color: #2a2a2a;
-  color: white;
+.view-full-page-button:hover {
+  background: #2980b9;
 }
 
 /* Update AddWonderForm styles */
@@ -464,130 +571,6 @@
 /* Special handling for profile container's content area */
 .profile-slide-container .slide-content {
     overflow: hidden;
-}
-
-.marker-details {
-  background-color: #1a1a1a;
-  color: white;
-}
-
-.marker-cover-image {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  position: relative;
-}
-
-.marker-cover-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.marker-details-header {
-  padding: 20px;
-  margin-bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
-  margin-top: -80px;
-  position: relative;
-  z-index: 1;
-}
-
-.marker-details-title {
-  font-size: 24px;
-  margin: 0 0 10px 0;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.marker-details-meta {
-  font-size: 14px;
-  color: #ccc;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.marker-details-category {
-  color: #3498db;
-  font-weight: 500;
-}
-
-.marker-details-coordinates {
-  cursor: pointer;
-  text-decoration: underline;
-  color: #2980b9;
-}
-
-.marker-details-coordinates:hover {
-  color: #3498db;
-}
-
-.marker-details-content {
-  padding: 20px;
-}
-
-.marker-description {
-  font-size: 16px;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
-  color: #ddd;
-}
-
-.marker-section {
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  padding: 15px;
-  margin: 15px 0;
-}
-
-.marker-section h3 {
-  color: white;
-  margin-top: 0;
-}
-
-.marker-section p {
-  color: #ccc;
-  margin-bottom: 0;
-}
-
-.marker-details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-}
-
-.detail-value {
-  font-size: 14px;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.marker-section.warning {
-  background-color: #fff5f5;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 4px solid #e74c3c;
-}
-
-.marker-section.warning h3 {
-  color: #c0392b;
-}
-
-.marker-section.warning p {
-  color: #e74c3c;
 }
 
 /* Styles for Reviews Section in MarkerDetails */
@@ -730,35 +713,6 @@
   border-radius: 4px;
   margin-bottom: 10px;
   font-size: 13px;
-}
-
-.view-full-page-button {
-  display: inline-block;
-  background-color: #3498db;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: 500;
-  margin-bottom: 20px;
-  transition: background-color 0.2s;
-  text-align: center;
-}
-
-.view-full-page-button:hover {
-  background-color: #2980b9;
-}
-
-.placeholder-image-container {
-  width: 100%;
-  height: 200px;
-  background-color: #2a2a2a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 20px;
-  box-sizing: border-box;
 }
 
 .placeholder-image-text {

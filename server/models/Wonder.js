@@ -169,12 +169,48 @@ const wonderSchema = new mongoose.Schema({
 wonderSchema.index({ location: '2dsphere' });
 
 // Generate slug before saving
-wonderSchema.pre('save', function(next) {
-  if (!this.slug) {
-    this.slug = slugify(this.name, { lower: true, strict: true });
+wonderSchema.pre('save', async function(next) {
+  try {
+    if (!this.slug) {
+      // Generate base slug from name
+      let baseSlug = slugify(this.name, { lower: true, strict: true });
+      
+      // Add country to slug if it exists
+      if (this.country) {
+        baseSlug += `-${slugify(this.country, { lower: true, strict: true })}`;
+      }
+      
+      // Check if the slug already exists
+      let slug = baseSlug;
+      let counter = 1;
+      let slugExists = true;
+      
+      while (slugExists) {
+        const existingWonder = await Wonder.findOne({ slug: slug, _id: { $ne: this._id } });
+        if (!existingWonder) {
+          slugExists = false;
+        } else {
+          // If slug exists, add coordinates (truncated to 2 decimal places)
+          if (counter === 1 && this.location && this.location.coordinates) {
+            const lat = this.location.coordinates[1].toFixed(2);
+            const lng = this.location.coordinates[0].toFixed(2);
+            slug = `${baseSlug}-${lat}-${lng}`;
+          } else {
+            // If still exists, append counter
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+          }
+        }
+      }
+      
+      this.slug = slug;
+    }
+    
+    this.updatedAt = Date.now();
+    next();
+  } catch (error) {
+    next(error);
   }
-  this.updatedAt = Date.now();
-  next();
 });
 
 const Wonder = mongoose.model('Wonder', wonderSchema);
