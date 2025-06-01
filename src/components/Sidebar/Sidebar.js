@@ -220,6 +220,13 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
     fetchWonderDetails();
   }, [marker?.id, marker?._id, onMarkerUpdate]);
 
+  const handleReviewSubmitted = useCallback((updatedWonder) => {
+    setMarker(prevMarker => ({ ...prevMarker, ...updatedWonder }));
+    if (onMarkerUpdate) {
+      onMarkerUpdate(updatedWonder);
+    }
+  }, [onMarkerUpdate]);
+
   const handleNextImage = () => {
     setCurrentImageIndex((prev) => 
       prev === (marker.photos?.length || 0) - 1 ? 0 : prev + 1

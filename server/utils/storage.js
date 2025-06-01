@@ -1,5 +1,6 @@
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
+const crypto = require('crypto');
 
 // Initialize storage with credentials
 let storage = null;
@@ -53,48 +54,67 @@ const initializeStorage = () => {
 // Initialize on startup
 initializeStorage();
 
+const generateSafeFileName = (originalName) => {
+  // Get file extension
+  const ext = path.extname(originalName);
+  
+  // Generate a random hash
+  const hash = crypto.randomBytes(8).toString('hex');
+  
+  // Create a safe filename: timestamp-hash.extension
+  return `${Date.now()}-${hash}${ext}`;
+};
+
 const uploadImage = async (file) => {
   if (!file) return null;
   
   // If storage is not initialized, return a placeholder URL
   if (!storage || !bucket) {
     console.warn('Storage not initialized. Returning placeholder URL.');
-    return `https://via.placeholder.com/300?text=${encodeURIComponent(file.originalname)}`;
+    return `https://via.placeholder.com/300?text=Image`;
   }
 
   try {
-    const blob = bucket.file(`wonders/${Date.now()}-${file.originalname}`);
+    // Generate a safe filename
+    const safeFileName = generateSafeFileName(file.originalname);
+    const filePath = `wonders/${safeFileName}`;
+    
+    const blob = bucket.file(filePath);
     const blobStream = blob.createWriteStream({
       resumable: false,
       metadata: {
-        contentType: file.mimetype
+        contentType: file.mimetype,
+        cacheControl: 'public, max-age=31536000' // Cache for 1 year
       }
     });
 
     return new Promise((resolve, reject) => {
       blobStream.on('error', (error) => {
         console.error('Error uploading to Google Cloud Storage:', error);
-        // Fallback to placeholder URL on error
-        resolve(`https://via.placeholder.com/300?text=${encodeURIComponent(file.originalname)}`);
+        // Return a more generic placeholder on error
+        resolve(`https://via.placeholder.com/300?text=Image`);
       });
       
       blobStream.on('finish', async () => {
         try {
-          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+          // Make the file public
+          await blob.makePublic();
+          
+          // Get the public URL
+          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
           resolve(publicUrl);
         } catch (error) {
-          console.error('Error getting public URL:', error);
-          // Fallback to placeholder URL on error
-          resolve(`https://via.placeholder.com/300?text=${encodeURIComponent(file.originalname)}`);
+          console.error('Error making file public:', error);
+          resolve(`https://via.placeholder.com/300?text=Image`);
         }
       });
 
+      // Write the file data to the stream
       blobStream.end(file.buffer);
     });
   } catch (error) {
     console.error('Error in uploadImage:', error);
-    // Fallback to placeholder URL on error
-    return `https://via.placeholder.com/300?text=${encodeURIComponent(file.originalname)}`;
+    return `https://via.placeholder.com/300?text=Image`;
   }
 };
 
