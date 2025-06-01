@@ -53,49 +53,43 @@ const hashBuffer = (buffer) => {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 };
 
+const generateSafeFilename = (originalName) => {
+  const timestamp = Date.now();
+  const randomString = crypto.randomBytes(8).toString('hex');
+  const extension = originalName.split('.').pop().toLowerCase();
+  return `${timestamp}-${randomString}.${extension}`;
+};
+
 const uploadImage = async (file) => {
-  if (!file) return null;
-
-  if (!storage || !bucket) {
-    console.warn('Storage not initialized. Returning placeholder URL.');
-    return `https://via.placeholder.com/300?text=Image`;
-  }
-
   try {
-    const fileHash = hashBuffer(file.buffer);
-    const ext = path.extname(file.originalname);
-    const filePath = `wonders/${fileHash}${ext}`;
-    const blob = bucket.file(filePath);
-
-    // Check if file already exists
-    const [exists] = await blob.exists();
-    if (exists) {
-      console.log('Duplicate image detected. Skipping upload.');
-      return `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+    if (!file || !file.buffer) {
+      console.error('Invalid file object');
+      return 'https://placehold.co/300x300?text=No+Image';
     }
 
+    const safeFilename = generateSafeFilename(file.originalname);
+    const blob = bucket.file(safeFilename);
     const blobStream = blob.createWriteStream({
       resumable: false,
       metadata: {
-        contentType: file.mimetype,
-        cacheControl: 'public, max-age=31536000',
-      },
+        contentType: file.mimetype
+      }
     });
 
     return new Promise((resolve, reject) => {
       blobStream.on('error', (error) => {
-        console.error('Error uploading to Google Cloud Storage:', error);
-        resolve(`https://via.placeholder.com/300?text=Image`);
+        console.error('Error uploading to GCS:', error);
+        resolve('https://placehold.co/300x300?text=Upload+Error');
       });
 
       blobStream.on('finish', async () => {
         try {
           await blob.makePublic();
-          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${safeFilename}`;
           resolve(publicUrl);
         } catch (error) {
           console.error('Error making file public:', error);
-          resolve(`https://via.placeholder.com/300?text=Image`);
+          resolve('https://placehold.co/300x300?text=Access+Error');
         }
       });
 
@@ -103,7 +97,7 @@ const uploadImage = async (file) => {
     });
   } catch (error) {
     console.error('Error in uploadImage:', error);
-    return `https://via.placeholder.com/300?text=Image`;
+    return 'https://placehold.co/300x300?text=Error';
   }
 };
 
