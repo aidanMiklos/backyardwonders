@@ -1,0 +1,313 @@
+.add-wonder-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.form-tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+  margin-bottom: 25px;
+  background-color: #2a2a2a;
+  border-radius: 8px 8px 0 0;
+  padding: 5px 10px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 10px 15px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s, border-color 0.2s;
+  margin-right: 5px;
+  margin-bottom: -1px;
+}
+
+.tab-button:last-child {
+  margin-right: 0;
+}
+
+.tab-button:hover {
+  color: white;
+}
+
+.tab-button.active {
+  color: #2ecc71;
+  border-bottom-color: #2ecc71;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #ccc;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 10px;
+  background-color: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 14px;
+  color: white;
+  transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-group select option {
+  background-color: #2a2a2a;
+  color: white;
+}
+
+/* Image upload styles */
+.image-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.image-input {
+  padding: 12px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-input:hover {
+  border-color: #3b82f6;
+  background-color: #f3f4f6;
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.image-preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.image-preview-item.cover {
+  border-color: #2ecc71;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.image-preview-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-preview-item:hover .image-preview-actions {
+  opacity: 1;
+}
+
+.image-preview-actions button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.image-preview-actions button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.image-preview-actions button.active {
+  color: #2ecc71;
+}
+
+.image-preview-actions button.remove {
+  color: #ef4444;
+}
+
+.image-preview-actions button.remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Category colors */
+.form-group select[name="category"] option {
+  background-color: white;
+  color: black;
+}
+
+/* Location section */
+.location-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.location-group {
+  gap: 12px;
+}
+
+.select-location-button {
+  background-color: #2a2a2a;
+  border: 1px solid #333;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.select-location-button:hover {
+  background-color: #333;
+}
+
+.coordinates-display {
+  background-color: #2a2a2a;
+  border: 1px solid #333;
+  padding: 12px;
+  border-radius: 8px;
+  color: #ccc;
+}
+
+.coordinates-display .coordinates {
+  color: white;
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+.no-location {
+  color: #666;
+  font-style: italic;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  position: sticky;
+  bottom: 0;
+  background-color: #1A1A1A;
+  padding: 15px 20px;
+  border-top: 1px solid #333;
+}
+
+.cancel-button,
+.submit-button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cancel-button:hover {
+  background-color: #e5e7eb;
+}
+
+.submit-button {
+  background-color: #2ecc71;
+  border: none;
+  color: white;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #27ae60;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Required field indicator */
+label[for]:after {
+  content: attr(for);
+}
+
+label[for]:after {
+  content: '';
+}
+
+label[for] + input[required]:after,
+label[for] + textarea[required]:after,
+label[for] + select[required]:after {
+  content: ' *';
+  color: #dc2626;
+} 

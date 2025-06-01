@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
+import { getWonders, getNearbyWonders } from '../../services/api';
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
 
@@ -33,15 +34,18 @@ const categoryIcons = {
 const MAP_LAYERS = {
   standard: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    name: 'Standard'
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    name: 'Satellite'
   },
   hybrid: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+    name: 'Hybrid'
   }
 };
 
@@ -78,8 +82,7 @@ const ZoomControl = () => {
   );
 };
 
-const MapStyleControl = ({ currentStyle, onStyleChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const MapStyleControl = ({ currentStyle, onStyleChange, isOpen, setIsOpen }) => {
   const map = useMap();
 
   const handleStyleClick = (e) => {
@@ -96,20 +99,13 @@ const MapStyleControl = ({ currentStyle, onStyleChange }) => {
   const handleLocate = (e) => {
     e.stopPropagation();
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        map.flyTo([position.coords.latitude, position.coords.longitude], 14);
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          map.flyTo([position.coords.latitude, position.coords.longitude], 14);
+        }
+      );
     }
   };
-
-  // Close style selector when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      if (isOpen) setIsOpen(false);
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isOpen]);
 
   return (
     <>
@@ -129,89 +125,150 @@ const MapStyleControl = ({ currentStyle, onStyleChange }) => {
           📍
         </button>
       </div>
-      <div className={`map-style-selector ${isOpen ? 'visible' : ''}`} onClick={(e) => e.stopPropagation()}>
-        <div className="style-options">
-          <div 
-            className={`style-option ${currentStyle === 'standard' ? 'active' : ''}`}
-            onClick={(e) => handleStyleSelect(e, 'standard')}
-          >
-            <div className="style-preview">
-              <img src={process.env.PUBLIC_URL + '/images/map-standard.svg'} alt="Standard map style" />
-            </div>
-            <div className="style-label">Standard</div>
-          </div>
-          <div 
-            className={`style-option ${currentStyle === 'hybrid' ? 'active' : ''}`}
-            onClick={(e) => handleStyleSelect(e, 'hybrid')}
-          >
-            <div className="style-preview">
-              <img src={process.env.PUBLIC_URL + '/images/map-hybrid.svg'} alt="Hybrid map style" />
-            </div>
-            <div className="style-label">Hybrid</div>
-          </div>
-          <div 
-            className={`style-option ${currentStyle === 'satellite' ? 'active' : ''}`}
-            onClick={(e) => handleStyleSelect(e, 'satellite')}
-          >
-            <div className="style-preview">
-              <img src={process.env.PUBLIC_URL + '/images/map-satellite.svg'} alt="Satellite map style" />
-            </div>
-            <div className="style-label">Satellite</div>
+      {isOpen && (
+        <div className="map-style-selector visible" onClick={(e) => e.stopPropagation()}>
+          <div className="style-options">
+            {Object.entries(MAP_LAYERS).map(([style, { name }]) => (
+              <div 
+                key={style}
+                className={`style-option ${currentStyle === style ? 'active' : ''}`}
+                onClick={(e) => handleStyleSelect(e, style)}
+              >
+                <div className="style-preview">
+                  <img src={`${process.env.PUBLIC_URL}/images/map-${style}.svg`} alt={`${name} map style`} />
+                </div>
+                <div className="style-label">{name}</div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
 
-function Map({ onMarkerClick }) {
+// Helper function to get category icon
+const getCategoryIcon = (category) => {
+  const icons = {
+    nature: '🌲',
+    historical: '🏛️',
+    caves: '🕳️',
+    urban: '🏢',
+    viewpoints: '🌄',
+    water: '💧'
+  };
+  return icons[category] || '📍';
+};
+
+function Map({ onMarkerClick, shouldRefresh, isSelectingLocation, onLocationSelect, searchFilters, onLocationsFiltered }) {
   const [userPosition, setUserPosition] = useState(null);
+  const [defaultPosition, setDefaultPosition] = useState([0, 0]);
   const [locations, setLocations] = useState([]);
   const [error, setError] = useState(null);
   const [currentMapStyle, setCurrentMapStyle] = useState('standard');
   const [currentZoom, setCurrentZoom] = useState(13);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [isStyleSelectorOpen, setIsStyleSelectorOpen] = useState(false);
+  const [isLoadingPosition, setIsLoadingPosition] = useState(true);
+
+  // Memoize filtered locations
+  const filteredLocations = useMemo(() => {
+    if (!locations.length) return [];
+
+    let filtered = [...locations];
+
+    if (searchFilters.query) {
+      const query = searchFilters.query.toLowerCase();
+      filtered = filtered.filter(location => 
+        (location.name?.toLowerCase() || '').includes(query) ||
+        (location.description?.toLowerCase() || '').includes(query) ||
+        (location.country?.toLowerCase() || '').includes(query)
+      );
+    }
+
+    if (searchFilters.category) {
+      filtered = filtered.filter(location => 
+        location.category === searchFilters.category
+      );
+    }
+
+    return filtered;
+  }, [locations, searchFilters]);
+
+  // Update filtered locations in parent component
+  useEffect(() => {
+    if (onLocationsFiltered) {
+      onLocationsFiltered(filteredLocations);
+    }
+  }, [filteredLocations, onLocationsFiltered]);
 
   // Get user's location
   useEffect(() => {
+    setIsLoadingPosition(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserPosition([position.coords.latitude, position.coords.longitude]);
+          const pos = [position.coords.latitude, position.coords.longitude];
+          setUserPosition(pos);
+          setDefaultPosition(pos);
+          setIsLoadingPosition(false);
         },
-        (error) => {
-          console.error("Error getting location:", error);
-          setError("Could not get your location");
+        (geoError) => {
+          console.error("Error getting location:", geoError);
+          setError("Could not get your location. Showing default location.");
+          setDefaultPosition([43.6532, -79.3832]);
+          setIsLoadingPosition(false);
         }
       );
     } else {
-      setError("Geolocation is not supported by your browser");
+      setError("Geolocation is not supported by your browser. Showing default location.");
+      setDefaultPosition([43.6532, -79.3832]);
+      setIsLoadingPosition(false);
     }
   }, []);
 
-  // Dummy data
+  // Fetch wonders
   useEffect(() => {
-    setLocations([
-      {
-        id: '1',
-        name: 'Central Park',
-        description: 'A beautiful park in the city center',
-        latitude: 51.505,
-        longitude: -0.09,
-        category: 'park'
-      },
-      {
-        id: '2',
-        name: 'Botanical Gardens',
-        description: 'Beautiful gardens with rare plants',
-        latitude: 51.508,
-        longitude: -0.11,
-        category: 'garden'
+    const fetchWonders = async () => {
+      try {
+        let wonders;
+        if (userPosition) {
+          wonders = await getNearbyWonders(userPosition[0], userPosition[1], 50);
+        } else {
+          wonders = await getWonders();
+        }
+        
+        const mappedWonders = wonders.map(wonder => ({
+          id: wonder._id,
+          name: wonder.name,
+          description: wonder.description,
+          category: wonder.category,
+          subcategory: wonder.subcategory,
+          country: wonder.country,
+          latitude: wonder.location.coordinates[1],
+          longitude: wonder.location.coordinates[0],
+          createdBy: wonder.createdBy,
+          coverImage: wonder.coverImage,
+          history: wonder.history,
+          accessibility: wonder.accessibility,
+          difficulty: wonder.difficulty,
+          safetyWarnings: wonder.safetyWarnings,
+          visitingTips: wonder.visitingTips
+        }));
+
+        setLocations(mappedWonders);
+      } catch (err) {
+        console.error('Error fetching wonders:', err);
+        setError('Failed to load wonders');
       }
-    ]);
-  }, []);
+    };
+
+    fetchWonders();
+  }, [userPosition, shouldRefresh]);
 
   const handleMarkerClick = (location) => {
-    if (onMarkerClick) {
+    if (!isSelectingLocation && onMarkerClick) {
+      console.log('Marker clicked:', location);
       onMarkerClick(location);
     }
   };
@@ -220,25 +277,23 @@ function Map({ onMarkerClick }) {
     setCurrentZoom(e.target.getZoom());
   };
 
-  if (error) return <div>Error: {error}</div>;
-
-  const defaultPosition = userPosition || [51.505, -0.09];
-
-  const createCustomIcon = (category) => {
-    return L.divIcon({
-      html: `
-        <div class="custom-marker">
-          <span class="marker-icon">${category === 'park' ? '🌳' : '🌸'}</span>
-        </div>
-        <div class="marker-label-container">
-          <span class="marker-label-text">${category}</span>
-        </div>
-      `,
-      className: 'custom-marker-wrapper',
-      iconSize: L.point(30, 30, true),
-      iconAnchor: L.point(15, 30),
-    });
+  const handleMapClick = (e) => {
+    if (isSelectingLocation) {
+      const { lat, lng } = e.latlng;
+      setSelectedLocation([lat, lng]);
+      if (onLocationSelect) {
+        onLocationSelect(lat, lng);
+      }
+    }
   };
+
+  if (isLoadingPosition) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '18px' }}>Loading map data...</div>;
+  }
+
+  if (error && defaultPosition[0] === 0 && defaultPosition[1] === 0) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="map-container">
@@ -248,11 +303,14 @@ function Map({ onMarkerClick }) {
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
         onZoomEnd={handleZoomEnd}
+        onClick={handleMapClick}
       >
         <TileLayer
           attribution={MAP_LAYERS[currentMapStyle].attribution}
           url={MAP_LAYERS[currentMapStyle].url}
         />
+        
+        <MapClickHandler onMapClick={handleMapClick} />
         
         <MarkerClusterGroup
           chunkedLoading
@@ -264,19 +322,40 @@ function Map({ onMarkerClick }) {
             });
           }}
         >
-          {locations.map((location) => (
+          {filteredLocations.map((location) => (
             <Marker
               key={location.id}
               position={[location.latitude, location.longitude]}
-              icon={createCustomIcon(location.category)}
+              icon={L.divIcon({
+                html: `
+                  <div class="custom-marker">
+                    <span class="marker-icon">${getCategoryIcon(location.category)}</span>
+                  </div>
+                  <div class="marker-label-container">
+                    <span class="marker-label-text">${location.name}</span>
+                  </div>
+                `,
+                className: 'custom-marker-wrapper',
+                iconSize: L.point(30, 30, true),
+                iconAnchor: L.point(15, 30),
+              })}
               eventHandlers={{
-                click: () => handleMarkerClick(location)
+                click: () => {
+                  console.log('Marker clicked, data:', location);
+                  handleMarkerClick(location);
+                }
               }}
             >
               <Popup className="custom-popup">
                 <div className="marker-popup">
                   <h3>{location.name}</h3>
                   <p>{location.description}</p>
+                  {location.subcategory && (
+                    <p className="subcategory">{location.subcategory}</p>
+                  )}
+                  {location.country && (
+                    <p className="country">{location.country}</p>
+                  )}
                 </div>
               </Popup>
             </Marker>
@@ -296,11 +375,48 @@ function Map({ onMarkerClick }) {
           </Marker>
         )}
 
+        {isSelectingLocation && selectedLocation && (
+          <Marker
+            position={selectedLocation}
+            icon={L.divIcon({
+              html: `<div class="custom-marker"><span class="marker-icon">📌</span></div>`,
+              className: '',
+              iconSize: L.point(30, 30, true),
+            })}
+            draggable={true}
+            eventHandlers={{
+              dragend: (e) => {
+                const marker = e.target;
+                const position = marker.getLatLng();
+                setSelectedLocation([position.lat, position.lng]);
+                if (onLocationSelect) {
+                  onLocationSelect(position.lat, position.lng);
+                }
+              }
+            }}
+          >
+            <Popup>New Wonder Location</Popup>
+          </Marker>
+        )}
+
         <ZoomControl />
-        <MapStyleControl currentStyle={currentMapStyle} onStyleChange={setCurrentMapStyle} />
+        <MapStyleControl 
+          currentStyle={currentMapStyle} 
+          onStyleChange={setCurrentMapStyle}
+          isOpen={isStyleSelectorOpen}
+          setIsOpen={setIsStyleSelectorOpen}
+        />
       </MapContainer>
     </div>
   );
 }
+
+// Add this component to handle map clicks
+const MapClickHandler = ({ onMapClick }) => {
+  const map = useMapEvents({
+    click: onMapClick
+  });
+  return null;
+};
 
 export default Map; 

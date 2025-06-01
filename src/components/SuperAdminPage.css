@@ -1,0 +1,49 @@
+.super-admin-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #121212; /* Very dark background */
+  color: #e0e0e0;
+  padding: 20px;
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.super-admin-content {
+  background-color: #1e1e1e; /* Slightly lighter card */
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  max-width: 600px;
+}
+
+.super-admin-content h1 {
+  color: #ffd700; /* Gold color for the crown/title */
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.super-admin-content p {
+  font-size: 1.1em;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.super-admin-link-back {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 10px 20px;
+  background-color: #ffd700;
+  color: #121212;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 6px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.super-admin-link-back:hover {
+  background-color: #ffc400;
+  transform: translateY(-2px);
+} 
