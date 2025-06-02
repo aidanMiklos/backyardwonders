@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const UserReputation = require('./UserReputation');
 
 const userSchema = new mongoose.Schema({
   googleId: {
@@ -257,8 +258,9 @@ userSchema.virtual('totalContributions').get(function() {
 });
 
 // Virtual field for reputation score
-userSchema.virtual('reputationScore').get(function() {
-  return UserReputation.findOne({ user: this._id }).select('trustScore');
+userSchema.virtual('reputationScore').get(async function() {
+  const reputation = await UserReputation.findOne({ user: this._id });
+  return reputation ? reputation.trustScore : 0;
 });
 
 // Update activity streak
