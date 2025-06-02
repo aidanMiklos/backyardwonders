@@ -1,0 +1,302 @@
+.discussion-container {
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.discussion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+}
+
+.discussion-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: white;
+}
+
+.new-discussion-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.new-discussion-button:hover {
+  background: #2980b9;
+}
+
+.new-discussion-form {
+  padding: 16px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #ccc;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-actions button[type="button"] {
+  background: #666;
+  color: white;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #555;
+}
+
+.form-actions button[type="submit"] {
+  background: #3498db;
+  color: white;
+}
+
+.form-actions button[type="submit"]:hover {
+  background: #2980b9;
+}
+
+.discussions-list {
+  padding: 16px;
+}
+
+.discussion-item {
+  background: #2a2a2a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.discussion-item:last-child {
+  margin-bottom: 0;
+}
+
+.discussion-item-header {
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.discussion-item-header:hover {
+  background: #333;
+}
+
+.discussion-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.discussion-type {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.discussion-type.general {
+  background: #3498db;
+  color: white;
+}
+
+.discussion-type.edit_proposal {
+  background: #f39c12;
+  color: white;
+}
+
+.discussion-type.content_issue {
+  background: #e74c3c;
+  color: white;
+}
+
+.discussion-type.fact_check {
+  background: #2ecc71;
+  color: white;
+}
+
+.discussion-info h3 {
+  margin: 0;
+  font-size: 16px;
+  color: white;
+}
+
+.discussion-meta {
+  display: flex;
+  gap: 12px;
+  color: #888;
+  font-size: 13px;
+}
+
+.discussion-author {
+  color: #3498db;
+}
+
+.discussion-details {
+  padding: 16px;
+  border-top: 1px solid #333;
+}
+
+.discussion-content {
+  color: #ccc;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.discussion-comments {
+  border-top: 1px solid #333;
+  padding-top: 16px;
+}
+
+.comment {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #333;
+}
+
+.comment:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-author {
+  color: #3498db;
+  font-weight: 500;
+}
+
+.comment-date {
+  color: #888;
+  font-size: 12px;
+}
+
+.comment-content {
+  color: #ccc;
+  line-height: 1.5;
+  margin-left: 44px;
+}
+
+.add-comment {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.add-comment textarea {
+  flex: 1;
+  min-height: 60px;
+  padding: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.add-comment textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.add-comment button {
+  align-self: flex-start;
+  padding: 8px 16px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.add-comment button:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.add-comment button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.discussion-loading,
+.discussion-error {
+  padding: 24px;
+  text-align: center;
+  color: #888;
+  font-size: 16px;
+} 

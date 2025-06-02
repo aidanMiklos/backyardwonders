@@ -12,6 +12,16 @@ const wonderSchema = new mongoose.Schema({
     type: String,
     unique: true
   },
+  // Initial Contributor
+  initialContributor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  contributedAt: {
+    type: Date,
+    default: Date.now
+  },
   category: {
     type: String,
     required: true,
@@ -40,29 +50,109 @@ const wonderSchema = new mongoose.Schema({
     }
   },
 
-  // Descriptive Information
-  description: {
-    type: String,
-    required: true,
-    trim: true
+  // Wiki-style Content Sections
+  content: {
+    overview: {
+      text: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    },
+    history: {
+      text: {
+        type: String,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    },
+    geography: {
+      text: {
+        type: String,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    },
+    floraAndFauna: {
+      text: {
+        type: String,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    },
+    culturalSignificance: {
+      text: {
+        type: String,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    },
+    visitingInfo: {
+      text: {
+        type: String,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    },
+    safetyGuidelines: {
+      text: {
+        type: String,
+        trim: true
+      },
+      lastEditedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      lastEditedAt: Date
+    }
   },
-  history: {
-    type: String,
-    trim: true
-  },
-  difficulty: {
-    type: String,
-    enum: ['easy', 'moderate', 'challenging', 'expert'],
-    default: 'moderate'
-  },
-  safetyWarnings: {
-    type: String,
-    trim: true
-  },
-  visitingTips: {
-    type: String,
-    trim: true
-  },
+
+  // References and Citations
+  references: [{
+    text: String,
+    url: String,
+    type: {
+      type: String,
+      enum: ['website', 'book', 'article', 'scientific_paper', 'other']
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
 
   // Media
   coverImage: {
@@ -87,6 +177,11 @@ const wonderSchema = new mongoose.Schema({
     uploadedAt: {
       type: Date,
       default: Date.now
+    },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'disputed'],
+      default: 'pending'
     }
   }],
   videos: [{
@@ -108,6 +203,25 @@ const wonderSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  contributors: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    role: {
+      type: String,
+      enum: ['creator', 'major_contributor', 'contributor', 'photo_contributor']
+    },
+    contributions: {
+      edits: Number,
+      photos: Number,
+      reviews: Number
+    },
+    firstContributedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   averageRating: {
     type: Number,
     default: 0,
@@ -136,19 +250,48 @@ const wonderSchema = new mongoose.Schema({
     }
   }],
 
-  // Moderation
-  isVerified: {
-    type: Boolean,
-    default: false
+  // Moderation and Quality Control
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'featured', 'disputed'],
+    default: 'pending'
+  },
+  qualityScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  completenessScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
   },
   isActive: {
     type: Boolean,
     default: true
   },
-  moderationNotes: {
+  moderationNotes: [{
+    note: String,
+    moderator: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+
+  // Protection Level
+  protectionLevel: {
     type: String,
-    trim: true
+    enum: ['none', 'semi-protected', 'fully-protected'],
+    default: 'none'
   },
+  protectionReason: String,
+  protectionExpiresAt: Date,
 
   // Timestamps
   createdAt: {
@@ -207,6 +350,29 @@ wonderSchema.pre('save', async function(next) {
   } catch (error) {
     next(error);
   }
+});
+
+// Calculate completeness score before saving
+wonderSchema.pre('save', function(next) {
+  let score = 0;
+  const totalFields = 8; // Total number of main content sections
+
+  // Check each content section
+  if (this.content) {
+    if (this.content.overview?.text) score++;
+    if (this.content.history?.text) score++;
+    if (this.content.geography?.text) score++;
+    if (this.content.floraAndFauna?.text) score++;
+    if (this.content.culturalSignificance?.text) score++;
+    if (this.content.visitingInfo?.text) score++;
+    if (this.content.safetyGuidelines?.text) score++;
+  }
+
+  // Check for photos
+  if (this.photos && this.photos.length > 0) score++;
+
+  this.completenessScore = Math.round((score / totalFields) * 100);
+  next();
 });
 
 const Wonder = mongoose.model('Wonder', wonderSchema);

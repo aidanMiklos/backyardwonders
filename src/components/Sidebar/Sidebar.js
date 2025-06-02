@@ -10,15 +10,19 @@ import { addRatingToWonder, getWonderById } from '../../services/api';
 import './Sidebar.css';
 
 const StarRating = ({ rating, setRating, disabled }) => {
+  const [hoverRating, setHoverRating] = useState(0);
+
   return (
     <div className="star-rating">
       {[1, 2, 3, 4, 5].map((star) => (
         <span
           key={star}
-          className={`star ${rating >= star ? 'filled' : ''} ${disabled ? 'disabled' : ''}`}
+          className={`star ${(hoverRating || rating) >= star ? 'filled' : ''} ${disabled ? 'disabled' : ''}`}
           onClick={() => !disabled && setRating?.(star)}
+          onMouseEnter={() => !disabled && setHoverRating(star)}
+          onMouseLeave={() => !disabled && setHoverRating(0)}
         >
-          ★
+          {(hoverRating || rating) >= star ? '★' : '☆'}
         </span>
       ))}
     </div>
@@ -33,6 +37,7 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
   const [error, setError] = useState('');
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
 
   // Initialize reviews and calculate average rating
   useEffect(() => {
@@ -103,6 +108,14 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
     }
   };
 
+  const handleNextReview = () => {
+    setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
+  };
+
+  const handlePrevReview = () => {
+    setCurrentReviewIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
+  };
+
   return (
     <section className="marker-section reviews-section">
       <h3>Reviews ({reviews.length || 0})</h3>
@@ -110,9 +123,11 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
       {/* Average Rating Display */}
       {reviews.length > 0 && (
         <div className="average-rating-display">
-          <span>Average Rating:</span>
-          <StarRating rating={Math.round(averageRating)} disabled={true} />
-          <span>({averageRating.toFixed(1)})</span>
+          <div className="average-rating-number">{averageRating.toFixed(1)}</div>
+          <div className="average-rating-stars">
+            <StarRating rating={Math.round(averageRating)} disabled={true} />
+            <span>({reviews.length} reviews)</span>
+          </div>
         </div>
       )}
 
@@ -154,38 +169,70 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
         </div>
       )}
 
-      {/* Existing Reviews */}
-      <div className="existing-reviews">
-        <h4>All Reviews</h4>
-        {reviews.length > 0 ? (
-          reviews.map((review) => (
-            <div 
-              key={review._id || `${review.user?._id}-${review.createdAt}`} 
-              className="review-item"
+      {/* Reviews Carousel */}
+      {reviews.length > 0 && (
+        <div className="reviews-carousel-container">
+          <h4>All Reviews</h4>
+          <div className="reviews-carousel">
+            <button 
+              className="carousel-nav prev" 
+              onClick={handlePrevReview}
+              disabled={reviews.length <= 1}
             >
-              <div className="review-header">
-                <div className="reviewer-info">
-                  <img 
-                    src={review.user?.picture || '/default-profile.png'} 
-                    alt={review.user?.displayName || 'User'} 
-                    className="reviewer-avatar"
-                  />
-                  <strong>{review.user?.displayName || 'Anonymous User'}</strong>
+              ‹
+            </button>
+            
+            <div className="carousel-content">
+              {reviews.map((review, index) => (
+                <div 
+                  key={review._id || `${review.user?._id}-${review.createdAt}`}
+                  className={`review-card ${index === currentReviewIndex ? 'active' : ''}`}
+                  style={{
+                    transform: `translateX(${(index - currentReviewIndex) * 100}%)`,
+                    opacity: index === currentReviewIndex ? 1 : 0
+                  }}
+                >
+                  <div className="review-header">
+                    <img 
+                      src={review.user?.picture || '/default-profile.png'} 
+                      alt={review.user?.displayName || 'User'} 
+                      className="reviewer-avatar"
+                    />
+                    <div className="reviewer-info">
+                      <strong>{review.user?.displayName || 'Anonymous User'}</strong>
+                      <StarRating rating={review.rating} disabled={true} />
+                    </div>
+                  </div>
+                  {review.comment && (
+                    <p className="review-comment">{review.comment}</p>
+                  )}
+                  <p className="review-date">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
-                <StarRating rating={review.rating} disabled={true} />
-              </div>
-              {review.comment && (
-                <p className="review-comment">{review.comment}</p>
-              )}
-              <p className="review-date">
-                {new Date(review.createdAt).toLocaleDateString()}
-              </p>
+              ))}
             </div>
-          ))
-        ) : (
-          <p className="no-reviews">No reviews yet. Be the first to review!</p>
-        )}
-      </div>
+
+            <button 
+              className="carousel-nav next" 
+              onClick={handleNextReview}
+              disabled={reviews.length <= 1}
+            >
+              ›
+            </button>
+          </div>
+          
+          <div className="carousel-dots">
+            {reviews.map((_, index) => (
+              <button
+                key={index}
+                className={`carousel-dot ${index === currentReviewIndex ? 'active' : ''}`}
+                onClick={() => setCurrentReviewIndex(index)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
@@ -193,7 +240,7 @@ const ReviewsSection = ({ wonder, onReviewSubmitted }) => {
 const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMarkerUpdate }) => {
   const [marker, setMarker] = useState(initialMarker);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showImageCarousel, setShowImageCarousel] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     setMarker(initialMarker);
@@ -228,15 +275,19 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
   }, [onMarkerUpdate]);
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === (marker.photos?.length || 0) - 1 ? 0 : prev + 1
-    );
+    setCurrentImageIndex(prev => (prev + 1) % marker.images.length);
   };
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? (marker.photos?.length || 0) - 1 : prev - 1
-    );
+    setCurrentImageIndex(prev => (prev - 1 + marker.images.length) % marker.images.length);
+  };
+
+  const handleImageClick = () => {
+    setIsFullscreen(true);
+  };
+
+  const handleCloseFullscreen = () => {
+    setIsFullscreen(false);
   };
 
   const getAmenityIcon = (amenity) => {
@@ -260,6 +311,29 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
     ...(marker.photos || [])
   ];
 
+  // Fullscreen Image Carousel Component
+  const FullscreenCarousel = () => (
+    <div className="fullscreen-carousel" onClick={handleCloseFullscreen}>
+      <div className="fullscreen-content" onClick={e => e.stopPropagation()}>
+        <button className="close-fullscreen" onClick={handleCloseFullscreen}>×</button>
+        <button className="nav-button prev" onClick={handlePrevImage}>‹</button>
+        <div className="fullscreen-image-container">
+          <img 
+            src={allImages[currentImageIndex].url} 
+            alt={`${marker.name} ${currentImageIndex + 1}`}
+            onError={(e) => {
+              e.target.src = '/images/placeholder-wonder.jpg';
+            }}
+          />
+        </div>
+        <button className="nav-button next" onClick={handleNextImage}>›</button>
+        <div className="fullscreen-counter">
+          {currentImageIndex + 1} / {allImages.length}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="marker-details">
       {/* Header Section */}
@@ -271,6 +345,15 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
             <span className="category">{CATEGORIES[marker.category]?.label}</span>
             <span className="location">{marker.country}</span>
           </div>
+          <div className="contributor-info">
+            <span className="contributor-label">Added by </span>
+            <span className="contributor-name">
+              {marker.initialContributor?.displayName || 'Unknown'}
+            </span>
+            <span className="contributor-date">
+              {marker.contributedAt ? new Date(marker.contributedAt).toLocaleDateString() : ''}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -278,7 +361,7 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
       <div className="marker-image-section">
         {allImages.length > 0 ? (
           <>
-            <div className="main-image-container">
+            <div className="main-image-container" onClick={handleImageClick}>
               <img 
                 src={allImages[currentImageIndex].url} 
                 alt={marker.name}
@@ -289,8 +372,8 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
               />
               {allImages.length > 1 && (
                 <>
-                  <button className="image-nav prev" onClick={handlePrevImage}>‹</button>
-                  <button className="image-nav next" onClick={handleNextImage}>›</button>
+                  <button className="image-nav prev" onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}>‹</button>
+                  <button className="image-nav next" onClick={(e) => { e.stopPropagation(); handleNextImage(); }}>›</button>
                   <div className="image-counter">
                     {currentImageIndex + 1} / {allImages.length}
                   </div>
@@ -400,6 +483,8 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
           View Full Page
         </Link>
       )}
+
+      {isFullscreen && <FullscreenCarousel />}
     </div>
   );
 };

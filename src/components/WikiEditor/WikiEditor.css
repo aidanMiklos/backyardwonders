@@ -1,0 +1,243 @@
+.wiki-editor {
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.wiki-editor-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+}
+
+.toolbar-group {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid #333;
+}
+
+.toolbar-group:last-child {
+  border-right: none;
+}
+
+.toolbar-group button {
+  background: none;
+  border: none;
+  color: #ccc;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.toolbar-group button:hover {
+  background: #333;
+  color: white;
+}
+
+.editor-container {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  min-height: 300px;
+}
+
+.wiki-textarea {
+  flex: 1;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: white;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 300px;
+}
+
+.wiki-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.preview-pane {
+  flex: 1;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background: #2a2a2a;
+  border-top: 1px solid #333;
+}
+
+.editor-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.editor-actions .cancel-button {
+  background: #666;
+  color: white;
+  margin-right: 8px;
+}
+
+.editor-actions .cancel-button:hover {
+  background: #555;
+}
+
+.editor-actions .save-button {
+  background: #2ecc71;
+  color: white;
+}
+
+.editor-actions .save-button:hover {
+  background: #27ae60;
+}
+
+.wiki-content {
+  padding: 16px;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.content-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 20px;
+}
+
+.edit-button {
+  background: none;
+  border: 1px solid #3498db;
+  color: #3498db;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.edit-button:hover {
+  background: #3498db;
+  color: white;
+}
+
+/* Markdown Content Styles */
+.wiki-content {
+  color: #ccc;
+  line-height: 1.6;
+}
+
+.wiki-content h1,
+.wiki-content h2,
+.wiki-content h3,
+.wiki-content h4,
+.wiki-content h5,
+.wiki-content h6 {
+  color: white;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.wiki-content p {
+  margin-bottom: 16px;
+}
+
+.wiki-content a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.wiki-content a:hover {
+  text-decoration: underline;
+}
+
+.wiki-content img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.wiki-content code {
+  background: #333;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.wiki-content pre {
+  background: #333;
+  padding: 16px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.wiki-content blockquote {
+  border-left: 4px solid #3498db;
+  margin: 16px 0;
+  padding-left: 16px;
+  color: #888;
+}
+
+.wiki-content ul,
+.wiki-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.wiki-content li {
+  margin-bottom: 8px;
+}
+
+.wiki-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.wiki-content th,
+.wiki-content td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: left;
+}
+
+.wiki-content th {
+  background: #2a2a2a;
+}
+
+.wiki-content tr:nth-child(even) {
+  background: #2a2a2a;
+}
+
+/* Preview Mode */
+.wiki-content.preview {
+  padding: 16px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border: 1px solid #333;
+} 

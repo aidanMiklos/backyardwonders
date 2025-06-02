@@ -49,6 +49,26 @@ const generateSafeFilename = (originalName) => {
   return `${timestamp}-${randomString}.${extension}`;
 };
 
+const deleteImage = async (imageUrl) => {
+  try {
+    if (!storage || !bucket) {
+      console.error('Storage not initialized');
+      return false;
+    }
+
+    // Extract filename from the URL
+    const filename = imageUrl.split('/').pop();
+    
+    // Delete the file
+    await bucket.file(filename).delete();
+    console.log(`Successfully deleted image: ${filename}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    return false;
+  }
+};
+
 const uploadImage = async (file) => {
     try {
       if (!storage || !bucket) {
@@ -89,4 +109,4 @@ const uploadImage = async (file) => {
     }
   };
 
-module.exports = { uploadImage };
+module.exports = { uploadImage, deleteImage };
