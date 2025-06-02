@@ -1,6 +1,6 @@
 import { getToken } from '../utils/auth';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://backend-91pf.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://backend-91pf.onrender.com';
 
 // Add CORS headers to all fetch requests
 const fetchWithConfig = (url, options = {}) => {
@@ -74,11 +74,21 @@ export const getUserProfile = async (token) => {
 // Wonder API endpoints
 export const createWonder = async (formData, token) => {
   try {
-    // Add initial contributor info to formData
-    formData.append('initialContributor', JSON.parse(atob(token.split('.')[1])).userId);
-    formData.append('contributedAt', new Date().toISOString());
+    if (!token) {
+      throw new Error('Authentication token is required');
+    }
 
-    const response = await fetch(`${API_URL}/wonders`, {
+    // Add initial contributor info to formData
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      formData.append('initialContributor', tokenData.userId);
+      formData.append('contributedAt', new Date().toISOString());
+    } catch (tokenError) {
+      console.error('Error parsing token:', tokenError);
+      // Continue without contributor info
+    }
+
+    const response = await fetch(`${API_URL}/api/wonders`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -87,11 +97,11 @@ export const createWonder = async (formData, token) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create wonder');
+      const errorData = await response.json().catch(() => ({ message: 'Failed to create wonder' }));
+      throw new Error(errorData.message);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error('Error creating wonder:', error);
     throw error;
@@ -99,25 +109,46 @@ export const createWonder = async (formData, token) => {
 };
 
 export const getWonders = async () => {
-  const response = await fetch(`${API_URL}/wonders`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch wonders');
-  }
+  try {
+    const response = await fetch(`${API_URL}/api/wonders`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch wonders' }));
+      throw new Error(errorData.message);
+    }
 
-  return response.json();
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching wonders:', error);
+    throw error;
+  }
 };
 
 export const getNearbyWonders = async (lat, lng, radius) => {
-  const response = await fetch(
-    `${API_URL}/wonders/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
-  );
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch nearby wonders');
-  }
+  try {
+    const response = await fetch(
+      `${API_URL}/api/wonders/nearby?lat=${lat}&lng=${lng}&radius=${radius}`,
+      {
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch nearby wonders' }));
+      throw new Error(errorData.message);
+    }
 
-  return response.json();
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching nearby wonders:', error);
+    throw error;
+  }
 };
 
 export const updateWonder = async (wonderId, wonderData, token) => {
@@ -160,25 +191,42 @@ export const deleteWonder = async (wonderId, token, images = []) => {
 };
 
 export const addRatingToWonder = async (wonderId, ratingData, token) => {
-  const response = await fetch(`${API_URL}/wonders/${wonderId}/ratings`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(ratingData)
-  });
+  try {
+    if (!wonderId) {
+      throw new Error('Wonder ID is required');
+    }
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Failed to add rating' }));
-    throw new Error(errorData.message);
+    if (!token) {
+      throw new Error('Authentication token is required');
+    }
+
+    const response = await fetch(`${API_URL}/api/wonders/${wonderId}/ratings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(ratingData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to add rating' }));
+      throw new Error(errorData.message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding rating:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const getWonderById = async (wonderId) => {
   try {
+    if (!wonderId) {
+      throw new Error('Wonder ID is required');
+    }
+
     const response = await fetch(`${API_URL}/api/wonders/${wonderId}`, {
       headers: {
         'Authorization': `Bearer ${getToken()}`
@@ -186,7 +234,8 @@ export const getWonderById = async (wonderId) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch wonder');
+      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch wonder' }));
+      throw new Error(errorData.message);
     }
 
     return await response.json();

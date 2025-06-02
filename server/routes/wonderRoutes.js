@@ -263,44 +263,46 @@ router.post('/:id/ratings', auth, async (req, res) => {
     }
 
     const { rating, comment } = req.body;
-    const userId = req.user._id;
-
+    
+    // Validate rating
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Rating must be between 1 and 5' });
     }
 
-    // Check if user already rated this wonder
-    const existingRatingIndex = wonder.ratings.findIndex(r => r.user.equals(userId));
+    // Check if user has already rated
+    const existingRatingIndex = wonder.ratings.findIndex(r => 
+      r.user.toString() === req.user._id.toString()
+    );
 
-    if (existingRatingIndex > -1) {
+    if (existingRatingIndex !== -1) {
       // Update existing rating
-      wonder.ratings[existingRatingIndex].rating = rating;
-      wonder.ratings[existingRatingIndex].comment = comment || '';
-      wonder.ratings[existingRatingIndex].createdAt = Date.now();
+      wonder.ratings[existingRatingIndex] = {
+        user: req.user._id,
+        rating,
+        comment,
+        createdAt: new Date()
+      };
     } else {
       // Add new rating
-      wonder.ratings.push({ user: userId, rating, comment: comment || '', createdAt: Date.now() });
+      wonder.ratings.push({
+        user: req.user._id,
+        rating,
+        comment,
+        createdAt: new Date()
+      });
     }
 
-    // Recalculate average rating and rating count
-    wonder.ratingCount = wonder.ratings.length;
-    if (wonder.ratingCount > 0) {
-      const totalRating = wonder.ratings.reduce((acc, curr) => acc + curr.rating, 0);
-      wonder.averageRating = parseFloat((totalRating / wonder.ratingCount).toFixed(1));
-    } else {
-      wonder.averageRating = 0;
-    }
+    // Update average rating
+    const totalRating = wonder.ratings.reduce((sum, r) => sum + r.rating, 0);
+    wonder.averageRating = totalRating / wonder.ratings.length;
 
     await wonder.save();
-    await wonder.populate([
-      { path: 'createdBy', select: 'displayName picture' },
-      { path: 'ratings.user', select: 'displayName picture' }
-    ]);
-    res.status(201).json(wonder);
-
+    await wonder.populate('ratings.user', 'displayName picture');
+    
+    res.json(wonder);
   } catch (err) {
     console.error('Error adding rating:', err);
-    res.status(500).json({ message: 'Error adding rating' });
+    res.status(500).json({ message: 'Error adding rating: ' + err.message });
   }
 });
 

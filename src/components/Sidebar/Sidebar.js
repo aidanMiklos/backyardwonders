@@ -249,8 +249,14 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
   useEffect(() => {
     const fetchWonderDetails = async () => {
       try {
-        const wonderId = marker?.id || marker?._id;
-        if (!wonderId) return;
+        const wonderId = marker?._id;
+        if (!wonderId) {
+          // Only log warning if marker exists but has no ID
+          if (marker) {
+            console.warn('No wonder ID available');
+          }
+          return;
+        }
 
         const wonderData = await getWonderById(wonderId);
         if (wonderData) {
@@ -261,11 +267,16 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
         }
       } catch (err) {
         console.error('Error fetching wonder details:', err);
+        // Don't close the sidebar, just show an error message
+        setMarker(prevMarker => ({
+          ...prevMarker,
+          error: 'Failed to load wonder details. Please try again later.'
+        }));
       }
     };
 
     fetchWonderDetails();
-  }, [marker?.id, marker?._id, onMarkerUpdate]);
+  }, [marker?._id, onMarkerUpdate]);
 
   const handleReviewSubmitted = useCallback((updatedWonder) => {
     setMarker(prevMarker => ({ ...prevMarker, ...updatedWonder }));
@@ -336,155 +347,178 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
 
   return (
     <div className="marker-details">
-      {/* Header Section */}
-      <div className="marker-details-header">
-        <button className="back-button" onClick={onClose}>←</button>
-        <div className="header-content">
-          <h2 className="marker-details-title">{marker.name}</h2>
-          <div className="marker-details-subtitle">
-            <span className="category">{CATEGORIES[marker.category]?.label}</span>
-            <span className="location">{marker.country}</span>
-          </div>
-          <div className="contributor-info">
-            <span className="contributor-label">Added by </span>
-            <span className="contributor-name">
-              {marker.initialContributor?.displayName || 'Unknown'}
-            </span>
-            <span className="contributor-date">
-              {marker.contributedAt ? new Date(marker.contributedAt).toLocaleDateString() : ''}
-            </span>
-          </div>
+      {marker.error ? (
+        <div className="error-message" style={{ padding: '20px', color: '#e74c3c' }}>
+          {marker.error}
+          <button 
+            onClick={onClose} 
+            style={{ 
+              display: 'block', 
+              marginTop: '10px', 
+              padding: '8px 16px',
+              background: '#e74c3c',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
         </div>
-      </div>
-
-      {/* Image Section */}
-      <div className="marker-image-section">
-        {allImages.length > 0 ? (
-          <>
-            <div className="main-image-container" onClick={handleImageClick}>
-              <img 
-                src={allImages[currentImageIndex].url} 
-                alt={marker.name}
-                className="main-image"
-                onError={(e) => {
-                  e.target.src = '/images/placeholder-wonder.jpg';
-                }}
-              />
-              {allImages.length > 1 && (
-                <>
-                  <button className="image-nav prev" onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}>‹</button>
-                  <button className="image-nav next" onClick={(e) => { e.stopPropagation(); handleNextImage(); }}>›</button>
-                  <div className="image-counter">
-                    {currentImageIndex + 1} / {allImages.length}
-                  </div>
-                </>
-              )}
+      ) : (
+        <>
+          {/* Header Section */}
+          <div className="marker-details-header">
+            <button className="back-button" onClick={onClose}>←</button>
+            <div className="header-content">
+              <h2 className="marker-details-title">{marker.name}</h2>
+              <div className="marker-details-subtitle">
+                <span className="category">{CATEGORIES[marker.category]?.label}</span>
+                <span className="location">{marker.country}</span>
+              </div>
+              <div className="contributor-info">
+                <span className="contributor-label">Added by </span>
+                <span className="contributor-name">
+                  {marker.initialContributor?.displayName || 'Unknown'}
+                </span>
+                <span className="contributor-date">
+                  {marker.contributedAt ? new Date(marker.contributedAt).toLocaleDateString() : ''}
+                </span>
+              </div>
             </div>
-            {allImages.length > 1 && (
-              <div className="image-thumbnails">
-                {allImages.map((img, idx) => (
-                  <div 
-                    key={idx}
-                    className={`thumbnail ${idx === currentImageIndex ? 'active' : ''}`}
-                    onClick={() => setCurrentImageIndex(idx)}
-                  >
-                    <img 
-                      src={img.url} 
-                      alt={`${marker.name} ${idx + 1}`}
-                      onError={(e) => {
-                        e.target.src = '/images/placeholder-wonder.jpg';
-                      }}
-                    />
+          </div>
+
+          {/* Image Section */}
+          <div className="marker-image-section">
+            {allImages.length > 0 ? (
+              <>
+                <div className="main-image-container" onClick={handleImageClick}>
+                  <img 
+                    src={allImages[currentImageIndex].url} 
+                    alt={marker.name}
+                    className="main-image"
+                    onError={(e) => {
+                      e.target.src = '/images/placeholder-wonder.jpg';
+                    }}
+                  />
+                  {allImages.length > 1 && (
+                    <>
+                      <button className="image-nav prev" onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}>‹</button>
+                      <button className="image-nav next" onClick={(e) => { e.stopPropagation(); handleNextImage(); }}>›</button>
+                      <div className="image-counter">
+                        {currentImageIndex + 1} / {allImages.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {allImages.length > 1 && (
+                  <div className="image-thumbnails">
+                    {allImages.map((img, idx) => (
+                      <div 
+                        key={idx}
+                        className={`thumbnail ${idx === currentImageIndex ? 'active' : ''}`}
+                        onClick={() => setCurrentImageIndex(idx)}
+                      >
+                        <img 
+                          src={img.url} 
+                          alt={`${marker.name} ${idx + 1}`}
+                          onError={(e) => {
+                            e.target.src = '/images/placeholder-wonder.jpg';
+                          }}
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+              </>
+            ) : (
+              <div className="placeholder-image-container">
+                <img 
+                  src="/images/placeholder-wonder.jpg" 
+                  alt="Placeholder"
+                  className="placeholder-image"
+                />
               </div>
             )}
-          </>
-        ) : (
-          <div className="placeholder-image-container">
-            <img 
-              src="/images/placeholder-wonder.jpg" 
-              alt="Placeholder"
-              className="placeholder-image"
-            />
           </div>
-        )}
-      </div>
 
-      {/* Good to Know Section */}
-      <section className="good-to-know-section">
-        <h3>Good to Know</h3>
-        <div className="amenities-grid">
+          {/* Good to Know Section */}
+          <section className="good-to-know-section">
+            <h3>Good to Know</h3>
+            <div className="amenities-grid">
 
-          {marker.difficulty && (
-            <div className="amenity-item">
-              <span className="amenity-icon">🥾</span>
-              <span>Difficulty: {marker.difficulty}</span>
+              {marker.difficulty && (
+                <div className="amenity-item">
+                  <span className="amenity-icon">🥾</span>
+                  <span>Difficulty: {marker.difficulty}</span>
+                </div>
+              )}
+              {marker.visitingTips && (
+                <div className="amenity-item">
+                  <span className="amenity-icon">ℹ️</span>
+                  <span>Visiting Tips Available</span>
+                </div>
+              )}
+              {marker.safetyWarnings && (
+                <div className="amenity-item">
+                  <span className="amenity-icon">⚠️</span>
+                  <span>Safety Information</span>
+                </div>
+              )}
             </div>
-          )}
-          {marker.visitingTips && (
-            <div className="amenity-item">
-              <span className="amenity-icon">ℹ️</span>
-              <span>Visiting Tips Available</span>
+          </section>
+
+          {/* Details Section */}
+          <section className="details-section">
+            <h3>Details</h3>
+            <div className="details-content">
+              <div className="detail-item">
+                <h4>Description</h4>
+                <p>{marker.description}</p>
+              </div>
+              {marker.history && (
+                <section>
+                  <h2>History</h2>
+                  <p>{marker.history}</p>
+                </section>
+              )}
+
+              {marker.visitingTips && (
+                <section>
+                  <h2>Tips for Visiting</h2>
+                  <p>{marker.visitingTips}</p>
+                </section>
+              )}
+
+              {marker.safetyWarnings && (
+                <section className="warning">
+                  <h2>Safety Warnings</h2>
+                  <p>{marker.safetyWarnings}</p>
+                </section>
+              )}
             </div>
-          )}
-          {marker.safetyWarnings && (
-            <div className="amenity-item">
-              <span className="amenity-icon">⚠️</span>
-              <span>Safety Information</span>
-            </div>
-          )}
-        </div>
-      </section>
+          </section>
 
-      {/* Details Section */}
-      <section className="details-section">
-        <h3>Details</h3>
-        <div className="details-content">
-          <div className="detail-item">
-            <h4>Description</h4>
-            <p>{marker.description}</p>
-          </div>
-          {marker.history && (
-            <section>
-              <h2>History</h2>
-              <p>{marker.history}</p>
-            </section>
+          <ReviewsSection
+            wonder={{
+              ...marker,
+              ratings: marker.ratings || [],
+              ratingCount: marker.ratingCount || 0,
+              averageRating: marker.averageRating || 0
+            }} 
+            onReviewSubmitted={handleReviewSubmitted}
+          />
+
+          {marker.slug && (
+            <Link to={`/wonder/${marker.slug}`} className="view-full-page-button">
+              View Full Page
+            </Link>
           )}
 
-          {marker.visitingTips && (
-            <section>
-              <h2>Tips for Visiting</h2>
-              <p>{marker.visitingTips}</p>
-            </section>
-          )}
-
-          {marker.safetyWarnings && (
-            <section className="warning">
-              <h2>Safety Warnings</h2>
-              <p>{marker.safetyWarnings}</p>
-            </section>
-          )}
-        </div>
-      </section>
-
-      <ReviewsSection
-        wonder={{
-          ...marker,
-          ratings: marker.ratings || [],
-          ratingCount: marker.ratingCount || 0,
-          averageRating: marker.averageRating || 0
-        }} 
-        onReviewSubmitted={handleReviewSubmitted}
-      />
-
-      {marker.slug && (
-        <Link to={`/wonder/${marker.slug}`} className="view-full-page-button">
-          View Full Page
-        </Link>
+          {isFullscreen && <FullscreenCarousel />}
+        </>
       )}
-
-      {isFullscreen && <FullscreenCarousel />}
     </div>
   );
 };
