@@ -5,6 +5,7 @@ const Wonder = require('../models/Wonder');
 const auth = require('../middleware/auth');
 const { superadminAuth } = require('../middleware/adminAuth');
 const { uploadImage } = require('../utils/storage');
+const mongoose = require('mongoose');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -52,19 +53,32 @@ router.get('/nearby', async (req, res) => {
   }
 });
 
-// Get a single wonder by ID (ensure this endpoint exists and populates ratings)
-// This is a common pattern, though your current setup might rely on client-side filtering from all wonders
-router.get('/:id', async (req, res) => {
+// Get a single wonder by ID or slug
+router.get('/:idOrSlug', async (req, res) => {
   try {
-    const wonder = await Wonder.findById(req.params.id)
-      .populate('createdBy', 'displayName picture')
-      .populate('ratings.user', 'displayName picture');
+    let wonder;
+    
+    // First try to find by ID
+    if (mongoose.Types.ObjectId.isValid(req.params.idOrSlug)) {
+      wonder = await Wonder.findById(req.params.idOrSlug)
+        .populate('createdBy', 'displayName picture')
+        .populate('ratings.user', 'displayName picture');
+    }
+    
+    // If not found by ID, try to find by slug
+    if (!wonder) {
+      wonder = await Wonder.findOne({ slug: req.params.idOrSlug })
+        .populate('createdBy', 'displayName picture')
+        .populate('ratings.user', 'displayName picture');
+    }
+
     if (!wonder) {
       return res.status(404).json({ message: 'Wonder not found' });
     }
+    
     res.json(wonder);
   } catch (err) {
-    console.error(`Error fetching wonder ${req.params.id}:`, err);
+    console.error(`Error fetching wonder ${req.params.idOrSlug}:`, err);
     res.status(500).json({ message: 'Error fetching wonder: ' + err.message });
   }
 });

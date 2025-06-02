@@ -27,8 +27,14 @@ const WonderPage = () => {
         if (foundWonder) {
           setWonder(foundWonder);
           // Fetch pending revisions
-          const revisions = await getWonderRevisions(foundWonder._id);
-          setPendingRevisions(revisions.filter(rev => rev.status === 'pending'));
+          try {
+            const revisions = await getWonderRevisions(foundWonder._id);
+            setPendingRevisions(revisions.filter(rev => rev.status === 'pending'));
+          } catch (revisionError) {
+            console.error('Error fetching revisions:', revisionError);
+            // Don't fail the whole page load if revisions fail
+            setPendingRevisions([]);
+          }
         } else {
           setError('Wonder not found.');
         }

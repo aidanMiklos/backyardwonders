@@ -179,18 +179,17 @@ export const addRatingToWonder = async (wonderId, ratingData, token) => {
 
 export const getWonderById = async (wonderId) => {
   try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}`, {
+    const response = await fetch(`${API_URL}/api/wonders/${wonderId}`, {
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${getToken()}`
       }
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch wonder details');
+      throw new Error('Failed to fetch wonder');
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
     console.error('Error fetching wonder:', error);
     throw error;
@@ -242,6 +241,10 @@ export const deleteRating = async (wonderId, ratingId, token) => {
 
 // Wonder Revisions
 export const getWonderRevisions = async (wonderId) => {
+  if (!wonderId) {
+    throw new Error('Wonder ID is required');
+  }
+
   try {
     const response = await fetch(`${API_URL}/api/wonders/${wonderId}/revisions`, {
       headers: {
