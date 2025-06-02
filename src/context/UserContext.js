@@ -1,68 +1,72 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import * as api from '../services/api';
+import { authenticateWithGoogle, getUserProfile, updateUserProfile } from '../services/api';
+import { setToken as setAuthToken, removeToken, getToken } from '../utils/auth';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load user data from local storage and validate token
-  useEffect(() => {
-    const loadUser = async () => {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        try {
-          const userData = await api.getUserProfile(storedToken);
-          setUser(userData);
-          setToken(storedToken);
-        } catch (error) {
-          console.error('Failed to load user:', error);
-          localStorage.removeItem('token');
-          setToken(null);
-        }
+  const loadUser = async () => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
 
+      const userData = await getUserProfile(token);
+      setUser(userData);
+    } catch (err) {
+      console.error('Failed to load user:', err);
+      setError(err.message);
+      removeToken();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadUser();
   }, []);
 
   const login = async (googleData) => {
     try {
-      const { user: userData, token: newToken } = await api.authenticateWithGoogle(googleData.credential);
-      setUser(userData);
-      setToken(newToken);
-      localStorage.setItem('token', newToken);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+      setError(null);
+      const data = await authenticateWithGoogle(googleData.credential);
+      setAuthToken(data.token);
+      setUser(data.user);
+      return data;
+    } catch (err) {
+      console.error('Login failed:', err);
+      setError(err.message);
+      throw err;
     }
   };
 
   const logout = () => {
+    removeToken();
     setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
   };
 
   const updateProfile = async (updates) => {
     try {
-      const updatedUser = await api.updateUserProfile(updates, token);
+      setError(null);
+      const token = getToken();
+      const updatedUser = await updateUserProfile(updates, token);
       setUser(updatedUser);
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      throw error;
+      return updatedUser;
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      setError(err.message);
+      throw err;
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <UserContext.Provider value={{ user, login, logout, updateProfile, token }}>
+    <UserContext.Provider value={{ user, loading, error, login, logout, updateProfile }}>
       {children}
     </UserContext.Provider>
   );
@@ -70,7 +74,7 @@ export const UserProvider = ({ children }) => {
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;

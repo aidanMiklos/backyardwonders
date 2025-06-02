@@ -3,6 +3,7 @@ const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Wonder = require('../models/Wonder');
+const UserReputation = require('../models/UserReputation');
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -38,8 +39,10 @@ router.post('/google-signin', async (req, res) => {
     
     // Find or create user
     let user = await User.findOne({ googleId: payload.sub });
+    let isNewUser = false;
     
     if (!user) {
+      isNewUser = true;
       user = new User({
         googleId: payload.sub,
         email: payload.email,
@@ -50,6 +53,15 @@ router.post('/google-signin', async (req, res) => {
 
     user.lastLogin = new Date();
     await user.save();
+
+    // Create reputation record for new users
+    if (isNewUser) {
+      const reputation = new UserReputation({
+        user: user._id,
+        trustScore: 0
+      });
+      await reputation.save();
+    }
 
     // Generate JWT
     const jwtToken = jwt.sign(
@@ -71,6 +83,17 @@ router.get('/profile', auth, async (req, res) => {
     // Ensure virtuals are populated, including wondersCount and a new reviewsCount
     await req.user.populate('wondersCount');
     
+    // Get user reputation
+    const reputation = await UserReputation.findOne({ user: req.user._id });
+    if (!reputation) {
+      // Create reputation if it doesn't exist (for existing users)
+      const newReputation = new UserReputation({
+        user: req.user._id,
+        trustScore: 0
+      });
+      await newReputation.save();
+    }
+    
     // Manually count reviews by this user
     const wondersWithUserReviews = await Wonder.find({ "ratings.user": req.user._id });
     let reviewCount = 0;
@@ -84,7 +107,8 @@ router.get('/profile', auth, async (req, res) => {
 
     // Send a combined user object
     const userProfile = req.user.toObject(); // Convert to plain object to add properties
-    userProfile.reviewsCount = reviewCount; 
+    userProfile.reviewsCount = reviewCount;
+    userProfile.reputation = reputation || newReputation;
 
     res.send(userProfile);
   } catch (error) {

@@ -17,16 +17,22 @@ const fetchWithConfig = (url, options = {}) => {
 };
 
 export const authenticateWithGoogle = async (credential) => {
-  const response = await fetchWithConfig(`${API_URL}/users/google-signin`, {
-    method: 'POST',
-    body: JSON.stringify({ token: credential }),
-  });
-  
-  if (!response.ok) {
-    throw new Error('Authentication failed');
+  try {
+    const response = await fetchWithConfig(`${API_URL}/users/google-signin`, {
+      method: 'POST',
+      body: JSON.stringify({ token: credential }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Authentication failed' }));
+      throw new Error(error.message || 'Authentication failed');
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    throw error;
   }
-  
-  return response.json();
 };
 
 export const updateUserProfile = async (updates, token) => {
@@ -46,17 +52,23 @@ export const updateUserProfile = async (updates, token) => {
 };
 
 export const getUserProfile = async (token) => {
-  const response = await fetch(`${API_URL}/users/profile`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch profile');
+  try {
+    const response = await fetchWithConfig(`${API_URL}/users/profile`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to fetch profile' }));
+      throw new Error(error.message || 'Failed to fetch profile');
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    throw error;
   }
-  
-  return response.json();
 };
 
 // Wonder API endpoints
