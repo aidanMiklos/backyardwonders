@@ -215,4 +215,57 @@ export const deleteRating = async (wonderId, ratingId, token) => {
     console.error('Error deleting rating:', error);
     throw error;
   }
+};
+
+// Wonder Revision API endpoints
+export const getWonderRevisions = async (wonderId) => {
+  const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch wonder revisions');
+  }
+  return response.json();
+};
+
+export const getWonderRevision = async (wonderId, version) => {
+  const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions/${version}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch wonder revision');
+  }
+  return response.json();
+};
+
+export const createWonderRevision = async (wonderId, changes, editSummary, token) => {
+  const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ changes, editSummary })
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create wonder revision');
+  }
+  return response.json();
+};
+
+export const compareWonderRevisions = async (wonderId, fromVersion, toVersion) => {
+  const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions/compare?from=${fromVersion}&to=${toVersion}`);
+  if (!response.ok) {
+    throw new Error('Failed to compare wonder revisions');
+  }
+  return response.json();
+};
+
+export const revertWonderRevision = async (wonderId, version, token) => {
+  const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions/${version}/revert`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!response.ok) {
+    throw new Error('Failed to revert wonder revision');
+  }
+  return response.json();
 }; 

@@ -50,6 +50,27 @@ const wonderSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  culturalSignificance: {
+    type: String,
+    trim: true
+  },
+  floraAndFauna: {
+    type: String,
+    trim: true
+  },
+  visitingInformation: {
+    type: String,
+    trim: true
+  },
+  safetyGuidelines: {
+    type: String,
+    trim: true
+  },
+  references: [{
+    title: String,
+    url: String,
+    accessDate: Date
+  }],
   difficulty: {
     type: String,
     enum: ['easy', 'moderate', 'challenging', 'expert'],
@@ -107,6 +128,14 @@ const wonderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  lastEditedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  currentVersion: {
+    type: Number,
+    default: 1
   },
   averageRating: {
     type: Number,

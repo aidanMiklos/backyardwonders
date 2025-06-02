@@ -16,6 +16,13 @@ body {
   padding: 20px 30px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-content {
+  flex: 1;
 }
 
 .wonder-page-header h1 {
@@ -35,14 +42,61 @@ body {
   text-decoration: underline;
 }
 
+.page-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-button,
+.history-button,
+.back-to-wonder {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+}
+
+.edit-button:hover {
+  background-color: #1976d2;
+}
+
+.history-button {
+  background-color: #757575;
+  color: white;
+  border: none;
+}
+
+.history-button:hover {
+  background-color: #616161;
+}
+
+.back-to-wonder {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  margin: 20px;
+}
+
+.back-to-wonder:hover {
+  background-color: #f5f5f5;
+}
+
 .wonder-page-main-content {
   display: flex;
-  flex-direction: row-reverse; /* Infobox on the right */
+  flex-direction: row-reverse;
   padding: 20px 30px;
+  gap: 30px;
 }
 
 .wonder-page-article {
-  flex: 3; /* Takes more space */
+  flex: 3;
   line-height: 1.7;
   font-size: 1.05em;
 }
@@ -66,13 +120,12 @@ body {
 }
 
 .wonder-page-infobox {
-  flex: 1; /* Takes less space */
-  margin-left: 30px;
+  flex: 1;
   padding: 20px;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
   border-radius: 4px;
-  align-self: flex-start; /* Sticks to the top */
+  align-self: flex-start;
   font-size: 0.9em;
 }
 
@@ -100,7 +153,33 @@ body {
   color: #111;
 }
 
-.wonder-page-loading, .wonder-page-error {
+.references-section ol {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.references-section li {
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.references-section a {
+  color: #2196f3;
+  text-decoration: none;
+}
+
+.references-section a:hover {
+  text-decoration: underline;
+}
+
+.access-date {
+  color: #666;
+  font-size: 0.9em;
+  margin-left: 5px;
+}
+
+.wonder-page-loading,
+.wonder-page-error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -111,28 +190,37 @@ body {
 }
 
 .wonder-page-error a {
-  margin-top: 20px;
-  font-size: 0.8em;
-  padding: 8px 15px;
-  background-color: #007bff;
-  color: white;
+  color: #2196f3;
   text-decoration: none;
-  border-radius: 4px;
+  margin-top: 10px;
 }
 
-/* Responsive adjustments */
+.wonder-page-error a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .wonder-page-main-content {
     flex-direction: column;
   }
+
   .wonder-page-infobox {
-    margin-left: 0;
-    margin-bottom: 30px;
     width: 100%;
+    margin-bottom: 20px;
   }
+
+  .wonder-page-header {
+    flex-direction: column;
+  }
+
+  .page-actions {
+    margin-top: 15px;
+  }
+
   .wonder-page-header h1 {
     font-size: 2em;
   }
+
   .wonder-page-article h2 {
     font-size: 1.5em;
   }
