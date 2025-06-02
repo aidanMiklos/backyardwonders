@@ -50,49 +50,43 @@ const generateSafeFilename = (originalName) => {
 };
 
 const uploadImage = async (file) => {
-  try {
-    if (!storage || !bucket) {
-      console.error('Storage not initialized');
-      return 'https://placehold.co/300x300?text=Storage+Not+Initialized';
-    }
-
-    if (!file || !file.buffer) {
-      console.error('Invalid file object');
-      return 'https://placehold.co/300x300?text=No+Image';
-    }
-
-    const safeFilename = generateSafeFilename(file.originalname);
-    const blob = bucket.file(safeFilename);
-    const blobStream = blob.createWriteStream({
-      resumable: false,
-      metadata: {
-        contentType: file.mimetype
+    try {
+      if (!storage || !bucket) {
+        console.error('Storage not initialized');
+        return 'https://placehold.co/300x300?text=Storage+Not+Initialized';
       }
-    });
-
-    return new Promise((resolve, reject) => {
-      blobStream.on('error', (error) => {
-        console.error('Error uploading to GCS:', error);
-        resolve('https://placehold.co/300x300?text=Upload+Error');
-      });
-
-      blobStream.on('finish', async () => {
-        try {
-          await blob.makePublic();
-          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${safeFilename}`;
-          resolve(publicUrl);
-        } catch (error) {
-          console.error('Error making file public:', error);
-          resolve('https://placehold.co/300x300?text=Access+Error');
+  
+      if (!file || !file.buffer) {
+        console.error('Invalid file object');
+        return 'https://placehold.co/300x300?text=No+Image';
+      }
+  
+      const safeFilename = generateSafeFilename(file.originalname);
+      const blob = bucket.file(safeFilename);
+      const blobStream = blob.createWriteStream({
+        resumable: false,
+        metadata: {
+          contentType: file.mimetype
         }
       });
-
-      blobStream.end(file.buffer);
-    });
-  } catch (error) {
-    console.error('Error in uploadImage:', error);
-    return 'https://placehold.co/300x300?text=Error';
-  }
-};
+  
+      return new Promise((resolve, reject) => {
+        blobStream.on('error', (error) => {
+          console.error('Error uploading to GCS:', error);
+          resolve('https://placehold.co/300x300?text=Upload+Error');
+        });
+  
+        blobStream.on('finish', () => {
+          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${safeFilename}`;
+          resolve(publicUrl);
+        });
+  
+        blobStream.end(file.buffer);
+      });
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      return 'https://placehold.co/300x300?text=Error';
+    }
+  };
 
 module.exports = { uploadImage };
