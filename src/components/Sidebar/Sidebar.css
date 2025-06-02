@@ -304,29 +304,6 @@
   color: #3498db;
 }
 
-.contributor-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: 13px;
-  color: #aaa;
-}
-
-.contributor-label {
-  color: #888;
-}
-
-.contributor-name {
-  color: #3498db;
-  font-weight: 500;
-}
-
-.contributor-date {
-  color: #888;
-  font-size: 12px;
-}
-
 /* Image Section */
 .marker-image-section {
   position: relative;

@@ -1,26 +1,32 @@
 export const CATEGORIES = {
   nature: {
     icon: '🌲',
-    label: 'Nature'
+    label: 'Nature & Landscapes',
+    color: '#4CAF50'
   },
   historical: {
     icon: '🏛️',
-    label: 'Historical'
+    label: 'Historical Sites',
+    color: '#FFC107'
   },
   caves: {
     icon: '🕳️',
-    label: 'Caves'
+    label: 'Caves & Underground',
+    color: '#795548'
   },
   urban: {
     icon: '🏢',
-    label: 'Urban'
+    label: 'Urban Discoveries',
+    color: '#9C27B0'
   },
   viewpoints: {
     icon: '🌄',
-    label: 'Viewpoints'
+    label: 'Scenic Viewpoints',
+    color: '#2196F3'
   },
   water: {
     icon: '💧',
-    label: 'Water'
+    label: 'Water Features',
+    color: '#00BCD4'
   }
 }; 

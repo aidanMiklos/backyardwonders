@@ -118,11 +118,20 @@ const AddWonderForm = ({ onClose, onWonderAdded, onLocationSelectStart, onLocati
   }, [propSelectedLocation, onLocationSelectCancel]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type, checked } = e.target;
+    
+    if (name === 'category') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        subcategory: CATEGORIES[value].subcategories[0].value
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleImageUpload = (e) => {

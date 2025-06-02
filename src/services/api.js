@@ -1,6 +1,4 @@
-import { getToken } from '../utils/auth';
-
-const API_URL = process.env.REACT_APP_API_URL || 'https://backend-91pf.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://backend-91pf.onrender.com/api';
 
 // Add CORS headers to all fetch requests
 const fetchWithConfig = (url, options = {}) => {
@@ -17,22 +15,16 @@ const fetchWithConfig = (url, options = {}) => {
 };
 
 export const authenticateWithGoogle = async (credential) => {
-  try {
-    const response = await fetchWithConfig(`${API_URL}/users/google-signin`, {
-      method: 'POST',
-      body: JSON.stringify({ token: credential }),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Authentication failed' }));
-      throw new Error(error.message || 'Authentication failed');
-    }
-    
-    return response.json();
-  } catch (error) {
-    console.error('Authentication error:', error);
-    throw error;
+  const response = await fetchWithConfig(`${API_URL}/users/google-signin`, {
+    method: 'POST',
+    body: JSON.stringify({ token: credential }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Authentication failed');
   }
+  
+  return response.json();
 };
 
 export const updateUserProfile = async (updates, token) => {
@@ -52,103 +44,57 @@ export const updateUserProfile = async (updates, token) => {
 };
 
 export const getUserProfile = async (token) => {
-  try {
-    const response = await fetchWithConfig(`${API_URL}/users/profile`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Failed to fetch profile' }));
-      throw new Error(error.message || 'Failed to fetch profile');
-    }
-    
-    return response.json();
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    throw error;
+  const response = await fetch(`${API_URL}/users/profile`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch profile');
   }
+  
+  return response.json();
 };
 
 // Wonder API endpoints
 export const createWonder = async (formData, token) => {
-  try {
-    if (!token) {
-      throw new Error('Authentication token is required');
-    }
+  const response = await fetch(`${API_URL}/wonders`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+      // Don't set Content-Type header - it will be automatically set with boundary for FormData
+    },
+    body: formData // FormData object containing all fields including files
+  });
 
-    // Add initial contributor info to formData
-    try {
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
-      formData.append('initialContributor', tokenData.userId);
-      formData.append('contributedAt', new Date().toISOString());
-    } catch (tokenError) {
-      console.error('Error parsing token:', tokenError);
-      // Continue without contributor info
-    }
-
-    const response = await fetch(`${API_URL}/api/wonders`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to create wonder' }));
-      throw new Error(errorData.message);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating wonder:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error('Failed to create wonder');
   }
+
+  return response.json();
 };
 
 export const getWonders = async () => {
-  try {
-    const response = await fetch(`${API_URL}/api/wonders`, {
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch wonders' }));
-      throw new Error(errorData.message);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching wonders:', error);
-    throw error;
+  const response = await fetch(`${API_URL}/wonders`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch wonders');
   }
+
+  return response.json();
 };
 
 export const getNearbyWonders = async (lat, lng, radius) => {
-  try {
-    const response = await fetch(
-      `${API_URL}/api/wonders/nearby?lat=${lat}&lng=${lng}&radius=${radius}`,
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      }
-    );
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch nearby wonders' }));
-      throw new Error(errorData.message);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching nearby wonders:', error);
-    throw error;
+  const response = await fetch(
+    `${API_URL}/wonders/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
+  );
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch nearby wonders');
   }
+
+  return response.json();
 };
 
 export const updateWonder = async (wonderId, wonderData, token) => {
@@ -191,54 +137,37 @@ export const deleteWonder = async (wonderId, token, images = []) => {
 };
 
 export const addRatingToWonder = async (wonderId, ratingData, token) => {
-  try {
-    if (!wonderId) {
-      throw new Error('Wonder ID is required');
-    }
+  const response = await fetch(`${API_URL}/wonders/${wonderId}/ratings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(ratingData)
+  });
 
-    if (!token) {
-      throw new Error('Authentication token is required');
-    }
-
-    const response = await fetch(`${API_URL}/api/wonders/${wonderId}/ratings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(ratingData)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to add rating' }));
-      throw new Error(errorData.message);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error adding rating:', error);
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Failed to add rating' }));
+    throw new Error(errorData.message);
   }
+
+  return response.json();
 };
 
 export const getWonderById = async (wonderId) => {
   try {
-    if (!wonderId) {
-      throw new Error('Wonder ID is required');
-    }
-
-    const response = await fetch(`${API_URL}/api/wonders/${wonderId}`, {
+    const response = await fetch(`${API_URL}/wonders/${wonderId}`, {
       headers: {
-        'Authorization': `Bearer ${getToken()}`
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch wonder' }));
-      throw new Error(errorData.message);
+      throw new Error('Failed to fetch wonder details');
     }
 
-    return await response.json();
+    return response.json();
   } catch (error) {
     console.error('Error fetching wonder:', error);
     throw error;
@@ -284,199 +213,6 @@ export const deleteRating = async (wonderId, ratingId, token) => {
     return response.json();
   } catch (error) {
     console.error('Error deleting rating:', error);
-    throw error;
-  }
-};
-
-// Wonder Revisions
-export const getWonderRevisions = async (wonderId) => {
-  if (!wonderId) {
-    throw new Error('Wonder ID is required');
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/api/wonders/${wonderId}/revisions`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch revisions');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching revisions:', error);
-    throw error;
-  }
-};
-
-export const submitWonderEdit = async (wonderId, editData) => {
-  try {
-    const response = await fetch(`${API_URL}/api/wonders/${wonderId}/edit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify(editData)
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to submit edit');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error submitting edit:', error);
-    throw error;
-  }
-};
-
-export const approveRevision = async (wonderId, revisionId) => {
-  try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions/${revisionId}/approve`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getToken()}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to approve revision');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error approving revision:', error);
-    throw error;
-  }
-};
-
-export const rejectRevision = async (wonderId, revisionId, reason) => {
-  try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions/${revisionId}/reject`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify({ reason })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to reject revision');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error rejecting revision:', error);
-    throw error;
-  }
-};
-
-export const addRevisionComment = async (wonderId, revisionId, comment) => {
-  try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions/${revisionId}/comments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify({ comment })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to add comment');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    throw error;
-  }
-};
-
-// User Reputation
-export const getUserReputation = async (userId) => {
-  try {
-    const response = await fetch(`${API_URL}/users/${userId}/reputation`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch user reputation');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching user reputation:', error);
-    throw error;
-  }
-};
-
-export const getWonderDiscussions = async (wonderId) => {
-  try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/discussions`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch discussions');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching discussions:', error);
-    throw error;
-  }
-};
-
-export const createDiscussion = async (wonderId, discussionData) => {
-  try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/discussions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify(discussionData)
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create discussion');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating discussion:', error);
-    throw error;
-  }
-};
-
-export const addDiscussionComment = async (wonderId, discussionId, comment) => {
-  try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/discussions/${discussionId}/comments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify({ comment })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to add comment');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error adding comment:', error);
     throw error;
   }
 }; 

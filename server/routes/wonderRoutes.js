@@ -5,7 +5,6 @@ const Wonder = require('../models/Wonder');
 const auth = require('../middleware/auth');
 const { superadminAuth } = require('../middleware/adminAuth');
 const { uploadImage } = require('../utils/storage');
-const mongoose = require('mongoose');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -53,32 +52,19 @@ router.get('/nearby', async (req, res) => {
   }
 });
 
-// Get a single wonder by ID or slug
-router.get('/:idOrSlug', async (req, res) => {
+// Get a single wonder by ID (ensure this endpoint exists and populates ratings)
+// This is a common pattern, though your current setup might rely on client-side filtering from all wonders
+router.get('/:id', async (req, res) => {
   try {
-    let wonder;
-    
-    // First try to find by ID
-    if (mongoose.Types.ObjectId.isValid(req.params.idOrSlug)) {
-      wonder = await Wonder.findById(req.params.idOrSlug)
-        .populate('createdBy', 'displayName picture')
-        .populate('ratings.user', 'displayName picture');
-    }
-    
-    // If not found by ID, try to find by slug
-    if (!wonder) {
-      wonder = await Wonder.findOne({ slug: req.params.idOrSlug })
-        .populate('createdBy', 'displayName picture')
-        .populate('ratings.user', 'displayName picture');
-    }
-
+    const wonder = await Wonder.findById(req.params.id)
+      .populate('createdBy', 'displayName picture')
+      .populate('ratings.user', 'displayName picture');
     if (!wonder) {
       return res.status(404).json({ message: 'Wonder not found' });
     }
-    
     res.json(wonder);
   } catch (err) {
-    console.error(`Error fetching wonder ${req.params.idOrSlug}:`, err);
+    console.error(`Error fetching wonder ${req.params.id}:`, err);
     res.status(500).json({ message: 'Error fetching wonder: ' + err.message });
   }
 });
@@ -263,46 +249,44 @@ router.post('/:id/ratings', auth, async (req, res) => {
     }
 
     const { rating, comment } = req.body;
-    
-    // Validate rating
+    const userId = req.user._id;
+
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Rating must be between 1 and 5' });
     }
 
-    // Check if user has already rated
-    const existingRatingIndex = wonder.ratings.findIndex(r => 
-      r.user.toString() === req.user._id.toString()
-    );
+    // Check if user already rated this wonder
+    const existingRatingIndex = wonder.ratings.findIndex(r => r.user.equals(userId));
 
-    if (existingRatingIndex !== -1) {
+    if (existingRatingIndex > -1) {
       // Update existing rating
-      wonder.ratings[existingRatingIndex] = {
-        user: req.user._id,
-        rating,
-        comment,
-        createdAt: new Date()
-      };
+      wonder.ratings[existingRatingIndex].rating = rating;
+      wonder.ratings[existingRatingIndex].comment = comment || '';
+      wonder.ratings[existingRatingIndex].createdAt = Date.now();
     } else {
       // Add new rating
-      wonder.ratings.push({
-        user: req.user._id,
-        rating,
-        comment,
-        createdAt: new Date()
-      });
+      wonder.ratings.push({ user: userId, rating, comment: comment || '', createdAt: Date.now() });
     }
 
-    // Update average rating
-    const totalRating = wonder.ratings.reduce((sum, r) => sum + r.rating, 0);
-    wonder.averageRating = totalRating / wonder.ratings.length;
+    // Recalculate average rating and rating count
+    wonder.ratingCount = wonder.ratings.length;
+    if (wonder.ratingCount > 0) {
+      const totalRating = wonder.ratings.reduce((acc, curr) => acc + curr.rating, 0);
+      wonder.averageRating = parseFloat((totalRating / wonder.ratingCount).toFixed(1));
+    } else {
+      wonder.averageRating = 0;
+    }
 
     await wonder.save();
-    await wonder.populate('ratings.user', 'displayName picture');
-    
-    res.json(wonder);
+    await wonder.populate([
+      { path: 'createdBy', select: 'displayName picture' },
+      { path: 'ratings.user', select: 'displayName picture' }
+    ]);
+    res.status(201).json(wonder);
+
   } catch (err) {
     console.error('Error adding rating:', err);
-    res.status(500).json({ message: 'Error adding rating: ' + err.message });
+    res.status(500).json({ message: 'Error adding rating' });
   }
 });
 

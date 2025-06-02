@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const wonderRoutes = require('./routes/wonderRoutes');
-const wonderRevisionRoutes = require('./routes/wonderRevisions');
 
 const app = express();
 
@@ -53,7 +52,6 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/backyardw
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/wonders', wonderRoutes);
-app.use('/api/wonders', wonderRevisionRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

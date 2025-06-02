@@ -7,9 +7,10 @@ import './SuperAdminPage.css';
 const SuperAdminPage = () => {
   const [wonders, setWonders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const { token } = useUser();
 
@@ -23,6 +24,7 @@ const SuperAdminPage = () => {
       setWonders(data);
       setLoading(false);
     } catch (err) {
+      setError('Failed to fetch wonders');
       setLoading(false);
     }
   };
@@ -33,7 +35,7 @@ const SuperAdminPage = () => {
         await deleteWonder(wonderId, token, images);
         setWonders(wonders.filter(w => w._id !== wonderId));
       } catch (err) {
-        console.error('Failed to delete wonder');
+        setError('Failed to delete wonder');
       }
     }
   };
@@ -44,7 +46,7 @@ const SuperAdminPage = () => {
         const updatedWonder = await deleteRating(wonderId, ratingId, token);
         setWonders(wonders.map(w => w._id === wonderId ? updatedWonder : w));
       } catch (err) {
-        console.error('Failed to delete rating');
+        setError('Failed to delete rating');
       }
     }
   };
@@ -59,9 +61,9 @@ const SuperAdminPage = () => {
 
   const filteredWonders = wonders
     .filter(wonder => {
-      const matchesSearch = wonder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wonder.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = categoryFilter === 'all' || wonder.category === categoryFilter;
+      const matchesSearch = wonder.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        wonder.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || wonder.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
@@ -158,13 +160,13 @@ const SuperAdminPage = () => {
               <input
                 type="text"
                 placeholder="Search wonders..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
               />
               <select 
-                value={categoryFilter} 
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                value={selectedCategory} 
+                onChange={(e) => setSelectedCategory(e.target.value)}
                 className="category-select"
               >
                 <option value="all">All Categories</option>

@@ -413,7 +413,7 @@ function Map({ onMarkerClick, shouldRefresh, isSelectingLocation, onLocationSele
 
 // Add this component to handle map clicks
 const MapClickHandler = ({ onMapClick }) => {
-  useMapEvents({
+  const map = useMapEvents({
     click: onMapClick
   });
   return null;
