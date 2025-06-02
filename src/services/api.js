@@ -243,7 +243,7 @@ export const deleteRating = async (wonderId, ratingId, token) => {
 // Wonder Revisions
 export const getWonderRevisions = async (wonderId) => {
   try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/revisions`, {
+    const response = await fetch(`${API_URL}/api/wonders/${wonderId}/revisions`, {
       headers: {
         'Authorization': `Bearer ${getToken()}`
       }
@@ -262,7 +262,7 @@ export const getWonderRevisions = async (wonderId) => {
 
 export const submitWonderEdit = async (wonderId, editData) => {
   try {
-    const response = await fetch(`${API_URL}/wonders/${wonderId}/edit`, {
+    const response = await fetch(`${API_URL}/api/wonders/${wonderId}/edit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

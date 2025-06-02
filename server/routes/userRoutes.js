@@ -84,14 +84,14 @@ router.get('/profile', auth, async (req, res) => {
     await req.user.populate('wondersCount');
     
     // Get user reputation
-    const reputation = await UserReputation.findOne({ user: req.user._id });
+    let reputation = await UserReputation.findOne({ user: req.user._id });
     if (!reputation) {
       // Create reputation if it doesn't exist (for existing users)
-      const newReputation = new UserReputation({
+      reputation = new UserReputation({
         user: req.user._id,
         trustScore: 0
       });
-      await newReputation.save();
+      await reputation.save();
     }
     
     // Manually count reviews by this user
@@ -108,11 +108,11 @@ router.get('/profile', auth, async (req, res) => {
     // Send a combined user object
     const userProfile = req.user.toObject(); // Convert to plain object to add properties
     userProfile.reviewsCount = reviewCount;
-    userProfile.reputation = reputation || newReputation;
+    userProfile.reputation = reputation;
 
     res.send(userProfile);
   } catch (error) {
-    console.error("Error fetching profile:", error); // Log the error
+    console.error("Error fetching profile:", error);
     res.status(500).send({ error: 'Error fetching profile: ' + error.message });
   }
 });

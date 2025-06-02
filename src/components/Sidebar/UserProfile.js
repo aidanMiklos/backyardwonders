@@ -135,24 +135,30 @@ const UserProfile = ({ onClose }) => {
   };
 
   const renderMyPhotos = () => {
-    if (loadingContent) return <div className="loading-placeholder">Loading your photos...</div>;
-    if (!userPhotos.length) {
+    if (!user?.contributions?.photos || user.contributions.photos.length === 0) {
       return (
         <div className="no-content-placeholder">
-          <span className="no-content-icon">📸</span>
+          <div className="no-content-icon">📸</div>
           <h3>No Photos Yet</h3>
-          <p>Photos you upload to your wonders will appear here.</p>
+          <p>Your uploaded photos will appear here.</p>
         </div>
       );
     }
+
     return (
-      <div className="user-content-grid photos-grid">
-        {userPhotos.map((photo, index) => (
+      <div className="photos-grid">
+        {user.contributions.photos.map((photo, index) => (
           <div key={index} className="photo-card">
-            <img src={photo.url} alt={`Photo from ${photo.wonderName}`} />
+            <img 
+              src={photo.url || '/images/placeholder-wonder.jpg'} 
+              alt={`Photo ${index + 1}`}
+              onError={(e) => {
+                e.target.src = '/images/placeholder-wonder.jpg';
+              }}
+            />
             <div className="photo-info">
-              <h4>{photo.wonderName}</h4>
-              <p>{new Date(photo.uploadedAt).toLocaleDateString()}</p>
+              <h4>{photo.wonder?.name || 'Unnamed Wonder'}</h4>
+              <p>{new Date(photo.approvedAt || photo.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
         ))}
