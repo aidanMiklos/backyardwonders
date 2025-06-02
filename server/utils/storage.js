@@ -1,5 +1,4 @@
 const { Storage } = require('@google-cloud/storage');
-const path = require('path');
 const crypto = require('crypto');
 
 // Initialize storage with credentials
@@ -8,36 +7,26 @@ let bucket = null;
 
 const initializeStorage = () => {
   try {
-    if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_CLOUD_BUCKET) {
+    if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_CLOUD_BUCKET || !process.env.GOOGLE_CLOUD_KEYFILE) {
       console.warn('Missing required Google Cloud configuration. Image upload will be disabled.');
       return;
     }
 
-    if (process.env.GOOGLE_CLOUD_CREDENTIALS) {
-      storage = new Storage({
-        projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-        credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS),
-      });
-    } else {
-      const keyfilePath = path.join(__dirname, '..', process.env.GOOGLE_CLOUD_KEYFILE || 'credentials/keyfile.json');
-      try {
-        storage = new Storage({
-          projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-          keyFilename: keyfilePath,
-        });
-        console.log('Using keyfile from:', keyfilePath);
-      } catch (error) {
-        console.warn(`Could not find keyfile at ${keyfilePath}. Image upload will be disabled.`);
-        console.error('Storage initialization error:', error);
-        return;
-      }
-    }
+    // Decode base64 keyfile content
+    const keyfileContent = Buffer.from(process.env.GOOGLE_CLOUD_KEYFILE, 'base64').toString();
+    const credentials = JSON.parse(keyfileContent);
+
+    storage = new Storage({ 
+      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      credentials
+    });
 
     if (storage) {
       bucket = storage.bucket(process.env.GOOGLE_CLOUD_BUCKET);
       console.log('Google Cloud Storage initialized successfully');
       console.log('- Project ID:', process.env.GOOGLE_CLOUD_PROJECT_ID);
       console.log('- Bucket:', process.env.GOOGLE_CLOUD_BUCKET);
+      console.log('- Service Account:', credentials.client_email);
     }
   } catch (error) {
     console.error('Error initializing Google Cloud Storage:', error);
@@ -62,6 +51,11 @@ const generateSafeFilename = (originalName) => {
 
 const uploadImage = async (file) => {
   try {
+    if (!storage || !bucket) {
+      console.error('Storage not initialized');
+      return 'https://placehold.co/300x300?text=Storage+Not+Initialized';
+    }
+
     if (!file || !file.buffer) {
       console.error('Invalid file object');
       return 'https://placehold.co/300x300?text=No+Image';

@@ -332,12 +332,7 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
       <section className="good-to-know-section">
         <h3>Good to Know</h3>
         <div className="amenities-grid">
-          {marker.accessibility && (
-            <div className="amenity-item">
-              <span className="amenity-icon">♿</span>
-              <span>Wheelchair Accessible</span>
-            </div>
-          )}
+
           {marker.difficulty && (
             <div className="amenity-item">
               <span className="amenity-icon">🥾</span>
@@ -368,28 +363,24 @@ const MarkerDetails = ({ marker: initialMarker, onClose, onCoordinateClick, onMa
             <p>{marker.description}</p>
           </div>
           {marker.history && (
-            <div className="detail-item">
-              <h4>History</h4>
+            <section>
+              <h2>History</h2>
               <p>{marker.history}</p>
-            </div>
+            </section>
           )}
-          {marker.accessibility && (
-            <div className="detail-item">
-              <h4>Accessibility</h4>
-              <p>{marker.accessibility}</p>
-            </div>
-          )}
+
           {marker.visitingTips && (
-            <div className="detail-item">
-              <h4>Visiting Tips</h4>
+            <section>
+              <h2>Tips for Visiting</h2>
               <p>{marker.visitingTips}</p>
-            </div>
+            </section>
           )}
+
           {marker.safetyWarnings && (
-            <div className="detail-item warning">
-              <h4>Safety Warnings</h4>
+            <section className="warning">
+              <h2>Safety Warnings</h2>
               <p>{marker.safetyWarnings}</p>
-            </div>
+            </section>
           )}
         </div>
       </section>

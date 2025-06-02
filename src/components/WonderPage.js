@@ -80,10 +80,17 @@ const WonderPage = () => {
             </section>
           )}
 
-          {wonder.accessibility && (
+          {wonder.visitingTips && (
             <section>
-              <h2>Accessibility</h2>
-              <p>{wonder.accessibility}</p>
+              <h2>Tips for Visiting</h2>
+              <p>{wonder.visitingTips}</p>
+            </section>
+          )}
+
+          {wonder.safetyWarnings && (
+            <section>
+              <h2>Safety Warnings</h2>
+              <p>{wonder.safetyWarnings}</p>
             </section>
           )}
           
